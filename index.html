@@ -85,7 +85,14 @@
         .fondo-row:last-child { border-bottom: none; }
         .fondo-nombre { font-weight: 500; font-size: 0.92em; }
         .fondo-isin { font-family: var(--mono); font-size: 0.7em; color: var(--muted); margin-top: 3px; }
-        
+        .fondo-badge {
+            font-size: 0.68em; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+            background: rgba(74,222,128,0.1); color: var(--accent);
+            border: 1px solid rgba(74,222,128,0.2); letter-spacing: 0.04em; margin-left: 6px;
+        }
+        .fondo-obj { font-family: var(--mono); font-size: 0.82em; color: var(--muted); text-align: right; }
+        .fondo-perc { font-family: var(--mono); font-size: 0.82em; color: var(--accent2); text-align: right; }
+
         .input-wrap { position: relative; }
         .input-wrap input {
             background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
@@ -99,7 +106,20 @@
             transform: translateY(-50%); color: var(--muted); font-size: 0.82em; pointer-events: none;
         }
         .input-wrap.perc-input::after { content: '%'; }
-        .fondo-perc { font-family: var(--mono); font-size: 0.82em; color: var(--accent2); text-align: right; }
+
+        .dist-bar-wrap { margin: 4px 0 16px; }
+        .dist-bar-label {
+            display: flex; justify-content: space-between;
+            font-size: 0.76em; color: var(--muted); margin-bottom: 6px;
+        }
+        .dist-bar {
+            height: 7px; background: var(--border); border-radius: 4px;
+            overflow: hidden; display: flex; gap: 2px;
+        }
+        .dist-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+        .fill-f1 { background: #4ade80; }
+        .fill-f2 { background: #60a5fa; }
+        .fill-f3 { background: #a78bfa; }
 
         .dca-result { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 18px; }
         .dca-fund-row {
@@ -157,6 +177,23 @@
             padding: 13px 10px; font-size: 0.86em;
             border-top: 1px solid var(--border); vertical-align: middle;
         }
+        .dep-table tr:hover td { background: rgba(255,255,255,0.015); }
+        .dep-mono { font-family: var(--mono); }
+
+        .dep-progress-wrap { margin-bottom: 18px; }
+        .dep-progress-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; }
+        .dep-progress-name { font-weight: 500; font-size: 0.88em; }
+        .dep-progress-meta { font-size: 0.76em; color: var(--muted); margin-top: 2px; }
+        .dep-progress-right { text-align: right; font-size: 0.8em; color: var(--muted); }
+        .dep-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+        .dep-bar-fill {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            transition: width 0.5s ease;
+        }
+        .dep-bar-fill.vencido { background: var(--danger); }
+        .dep-bar-fill.proximo { background: var(--warning); }
+
         .dep-tag {
             display: inline-block; font-size: 0.68em; padding: 2px 7px;
             border-radius: 9px; font-weight: 600; letter-spacing: 0.03em;
@@ -173,8 +210,9 @@
         .form-group input {
             width: 100%; background: var(--surface2); border: 1px solid var(--border);
             border-radius: 8px; padding: 9px 13px; color: var(--text);
-            font-family: var(--font); font-size: 0.88em;
+            font-family: var(--font); font-size: 0.88em; transition: border-color 0.2s;
         }
+        .form-group input:focus { outline: none; border-color: var(--accent); }
 
         .pie-container { display: flex; align-items: center; gap: 36px; flex-wrap: wrap; }
         .pie-legend { flex: 1; min-width: 180px; }
@@ -182,9 +220,19 @@
             display: flex; align-items: center; gap: 10px;
             padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.86em;
         }
-        .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+        .legend-item:last-child { border-bottom: none; }
+        .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
         .legend-name { flex: 1; color: var(--muted); }
         .legend-val { font-family: var(--mono); font-size: 0.88em; }
+        .legend-perc { font-family: var(--mono); font-size: 0.75em; color: var(--muted); margin-left: 7px; }
+
+        .export-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        @media (max-width: 680px) {
+            header, .tabs, .tab-content { padding-left: 18px; padding-right: 18px; }
+            .fondo-row { grid-template-columns: 1fr 90px 130px; }
+            .fondo-obj, .fondo-perc { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -202,142 +250,298 @@
 </div>
 
 <div id="appScreen" style="display:none;">
-    <header>
-        <div class="logo">📈</div>
-        <div style="flex:1;">
-            <h1>Gestor DCA</h1>
-            <span>Control de Patrimonio y Reequilibrio Inteligente</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-            <span id="userEmail" style="font-size:0.78em;color:var(--muted);"></span>
-            <button onclick="cerrarSesion()" class="btn btn-ghost" style="padding:7px 14px;font-size:0.78em;">Salir</button>
-        </div>
-    </header>
 
-    <div class="tabs">
-        <div class="tab active" onclick="showTab('dashboard', event)">Dashboard</div>
-        <div class="tab" onclick="showTab('cartera', event)">Cartera DCA</div>
-        <div class="tab" onclick="showTab('depositos', event)">Depósitos</div>
-        <div class="tab" onclick="showTab('varios', event)">Varios</div>
+<header>
+    <div class="logo">📈</div>
+    <div style="flex:1;">
+        <h1>Gestor DCA</h1>
+        <span>100% Renta Variable · Control de inversiones</span>
     </div>
-
-    <div id="tab-dashboard" class="tab-content active">
-        <div class="cards">
-            <div class="card">
-                <div class="card-label">Patrimonio Total</div>
-                <div class="card-value green" id="dashTotal">0€</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Cartera Fondos</div>
-                <div class="card-value blue" id="dashCartera">0€</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Depósitos</div>
-                <div class="card-value" id="dashDepositos">0€</div>
-            </div>
-        </div>
-        <div class="section">
-            <div class="section-title">Distribución del Patrimonio</div>
-            <div class="pie-container">
-                <canvas id="pieChart" width="190" height="190"></canvas>
-                <div class="pie-legend" id="pieLegend"></div>
-            </div>
-        </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+        <span id="userEmail" style="font-size:0.78em;color:var(--muted);"></span>
+        <button onclick="cerrarSesion()" class="btn btn-ghost" style="padding:7px 14px;font-size:0.78em;">Salir</button>
     </div>
+</header>
 
-    <div id="tab-cartera" class="tab-content">
-        <div class="section">
-            <div class="section-title">Mis Fondos y Objetivos</div>
-            <div class="fondo-row" style="padding-bottom:8px;">
-                <div style="font-size:0.7em;text-transform:uppercase;color:var(--muted)">Fondo</div>
-                <div style="font-size:0.7em;text-transform:uppercase;color:var(--muted);text-align:right">Obj %</div>
-                <div style="font-size:0.7em;text-transform:uppercase;color:var(--muted);text-align:right">Act %</div>
-                <div style="font-size:0.7em;text-transform:uppercase;color:var(--muted);text-align:right">Importe</div>
-            </div>
-            <div class="fondo-row">
-                <div><div class="fondo-nombre">Developed World</div><div class="fondo-isin">IE000ZYRH0Q7</div></div>
-                <div class="input-wrap small perc-input"><input type="number" id="obj1" value="75" oninput="calcular(); guardarFirestore();"></div>
-                <div class="fondo-perc" id="perc1">0%</div>
-                <div class="input-wrap"><input type="number" id="fund1" value="0" oninput="calcular(); guardarFirestore();"></div>
-            </div>
-            <div class="fondo-row">
-                <div><div class="fondo-nombre">Emerging Markets</div><div class="fondo-isin">IE00BYWYCC39</div></div>
-                <div class="input-wrap small perc-input"><input type="number" id="obj2" value="13" oninput="calcular(); guardarFirestore();"></div>
-                <div class="fondo-perc" id="perc2">0%</div>
-                <div class="input-wrap"><input type="number" id="fund2" value="0" oninput="calcular(); guardarFirestore();"></div>
-            </div>
-            <div class="fondo-row">
-                <div><div class="fondo-nombre">Small-Cap</div><div class="fondo-isin">IE00B42W4L06</div></div>
-                <div class="input-wrap small perc-input"><input type="number" id="obj3" value="12" oninput="calcular(); guardarFirestore();"></div>
-                <div class="fondo-perc" id="perc3">0%</div>
-                <div class="input-wrap"><input type="number" id="fund3" value="0" oninput="calcular(); guardarFirestore();"></div>
-            </div>
-            <div id="objTotalAlert"></div>
+<div class="tabs">
+    <div class="tab active" onclick="showTab('dashboard', event)">Dashboard</div>
+    <div class="tab" onclick="showTab('cartera', event)">Cartera DCA</div>
+    <div class="tab" onclick="showTab('depositos', event)">Depósitos</div>
+    <div class="tab" onclick="showTab('varios', event)">Varios</div>
+</div>
+
+<div id="tab-dashboard" class="tab-content active">
+    <div class="cards">
+        <div class="card">
+            <div class="card-label">Patrimonio Total</div>
+            <div class="card-value green" id="dashTotal">0€</div>
         </div>
-
-        <div class="section">
-            <div class="section-title">Calculadora DCA (Reequilibrio)</div>
-            <div class="dca-input-wrap">
-                <input type="number" id="dcaAmount" placeholder="Cuanto invertir este mes..." step="50">
-            </div>
-            <div class="btn-row">
-                <button class="btn" onclick="calcularDCA()">Calcular Reequilibrio</button>
-                <button class="btn btn-ghost" onclick="aplicarDCA()">✓ Aplicar a Cartera</button>
-            </div>
-            <div id="dcaResult"></div>
+        <div class="card">
+            <div class="card-label">Cartera Fondos</div>
+            <div class="card-value blue" id="dashCartera">0€</div>
+            <div class="card-sub" id="dashCarteraPerc">0% del total</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Depósitos</div>
+            <div class="card-value" id="dashDepositos">0€</div>
+            <div class="card-sub" id="dashDepositosPerc">0% del total</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Varios</div>
+            <div class="card-value" id="dashVarios">0€</div>
+            <div class="card-sub" id="dashVariosPerc">0% del total</div>
         </div>
     </div>
 
-    <div id="tab-depositos" class="tab-content">
-        <div class="section">
-            <div class="section-title">Nuevo Depósito / Cuenta</div>
-            <div class="form-grid">
-                <div class="form-group"><label>Nombre Entidad</label><input type="text" id="depNombre" placeholder="P.ej. Trade Republic"></div>
-                <div class="form-group"><label>Importe (€)</label><input type="number" id="depImporte"></div>
-                <div class="form-group"><label>Interés (%)</label><input type="number" id="depInteres" step="0.1"></div>
-                <div class="form-group"><label>Vencimiento</label><input type="date" id="depVence"></div>
-            </div>
-            <button class="btn" onclick="agregarDeposito()">Añadir Depósito</button>
+    <div id="dashAlertas"></div>
+
+    <div class="section">
+        <div class="section-title">Distribución del Patrimonio</div>
+        <div class="pie-container">
+            <canvas id="pieChart" width="190" height="190"></canvas>
+            <div class="pie-legend" id="pieLegend"></div>
         </div>
-        <div class="section">
-            <div class="section-title">Listado de Activos</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Rentabilidad Estimada de la Cartera</div>
+        <div id="rentabilidadContainer"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Evolución del Patrimonio</div>
+        <p style="font-size:0.78em;color:var(--muted);margin-bottom:16px;">Snapshot automático cada vez que abres la app. Se acumula con el tiempo.</p>
+        <canvas id="evolucionChart" style="width:100%;height:200px;"></canvas>
+        <div id="evolucionEmpty" style="text-align:center;padding:40px 0;color:var(--muted);font-size:0.86em;">Aún no hay suficientes datos. Vuelve mañana 👋</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Historial DCA</div>
+        <div id="historialDCAContainer"><p style="color:var(--muted);font-size:0.86em;">Aún no has aplicado ningún DCA.</p></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Progreso de Depósitos</div>
+        <div id="dashDepProgress"><p style="color:var(--muted);font-size:0.86em;">Sin depósitos registrados.</p></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Backup</div>
+        <div class="export-row">
+            <button class="btn btn-ghost" onclick="exportarDatos()">↓ Descargar JSON</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">↑ Importar JSON</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarDatos(event)">
+        </div>
+    </div>
+</div>
+
+<div id="tab-cartera" class="tab-content">
+    <div class="cards">
+        <div class="card">
+            <div class="card-label">Total Invertido</div>
+            <div class="card-value green" id="totalInvertido">0€</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Developed World</div>
+            <div class="card-value blue" id="totalF1">0€</div>
+            <div class="card-sub" id="percF1card">0%</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Emerging Markets</div>
+            <div class="card-value" id="totalF2">0€</div>
+            <div class="card-sub" id="percF2card">0%</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Small-Cap</div>
+            <div class="card-value" id="totalF3">0€</div>
+            <div class="card-sub" id="percF3card">0%</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Distribución Actual vs Objetivo</div>
+        <div class="dist-bar-wrap">
+            <div class="dist-bar-label"><span>Actual</span><span id="distLabel">0% / 0% / 0%</span></div>
+            <div class="dist-bar" id="distBarActual"></div>
+        </div>
+        <div class="dist-bar-wrap">
+            <div class="dist-bar-label"><span>Objetivo</span><span id="distLabelObj">75% / 13% / 12%</span></div>
+            <div class="dist-bar" id="distBarObjetivo"></div>
+        </div>
+        <div id="distAlert"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Mis Fondos</div>
+        <div class="fondo-row" style="padding-bottom:8px;">
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Fondo</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Obj %</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Act %</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Importe</div>
+        </div>
+        <div class="fondo-row">
+            <div>
+                <div class="fondo-nombre">iShares Developed World <span class="fondo-badge">RV</span></div>
+                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06%</div>
+            </div>
+            <div class="input-wrap small perc-input"><input type="number" id="obj1" value="75" oninput="guardarObjetivo('obj1');calcular();"></div>
+            <div class="fondo-perc" id="perc1">0%</div>
+            <div class="input-wrap"><input type="number" id="fund1" value="0" step="100" oninput="guardarFondo('fund1');calcular();"></div>
+        </div>
+        <div class="fondo-row">
+            <div>
+                <div class="fondo-nombre">iShares Emerging Markets <span class="fondo-badge">RV</span></div>
+                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20%</div>
+            </div>
+            <div class="input-wrap small perc-input"><input type="number" id="obj2" value="13" oninput="guardarObjetivo('obj2');calcular();"></div>
+            <div class="fondo-perc" id="perc2">0%</div>
+            <div class="input-wrap"><input type="number" id="fund2" value="0" step="100" oninput="guardarFondo('fund2');calcular();"></div>
+        </div>
+        <div class="fondo-row">
+            <div>
+                <div class="fondo-nombre">Vanguard Global Small-Cap <span class="fondo-badge">RV</span></div>
+                <div class="fondo-isin">IE00B42W4L06 · TER 0.29%</div>
+            </div>
+            <div class="input-wrap small perc-input"><input type="number" id="obj3" value="12" oninput="guardarObjetivo('obj3');calcular();"></div>
+            <div class="fondo-perc" id="perc3">0%</div>
+            <div class="input-wrap"><input type="number" id="fund3" value="0" step="100" oninput="guardarFondo('fund3');calcular();"></div>
+        </div>
+        <div id="objTotalAlert"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Calculadora DCA</div>
+        <p style="font-size:0.84em;color:var(--muted);margin-bottom:16px;">¿Cuánto quieres invertir este mes?</p>
+        <div class="dca-input-wrap">
+            <input type="number" id="dcaAmount" placeholder="500" step="50">
+        </div>
+        <div class="btn-row">
+            <button class="btn" onclick="calcularDCA()">Calcular distribución</button>
+            <button class="btn btn-ghost" onclick="aplicarDCA()">✓ Aplicar DCA</button>
+        </div>
+        <div id="dcaResult"></div>
+    </div>
+</div>
+
+<div id="tab-depositos" class="tab-content">
+    <div class="cards">
+        <div class="card">
+            <div class="card-label">Total Depositado</div>
+            <div class="card-value green" id="totalDepositos">0€</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Beneficio Neto Est.</div>
+            <div class="card-value blue" id="beneficioDepositos">0€</div>
+            <div class="card-sub">Tras retención 19%</div>
+        </div>
+        <div class="card">
+            <div class="card-label">TAE Ponderado</div>
+            <div class="card-value" id="taePromedio">0%</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Añadir Depósito</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Banco</label><input type="text" id="depBanco" placeholder="Ej: Caixabank"></div>
+            <div class="form-group"><label>Cantidad (€)</label><input type="number" id="depCantidad" step="1000"></div>
+            <div class="form-group"><label>TAE (%)</label><input type="number" id="depTAE" step="0.01" placeholder="2.75"></div>
+            <div class="form-group"><label>Duración (meses)</label><input type="number" id="depDuracion" placeholder="12"></div>
+            <div class="form-group"><label>Fecha Vencimiento</label><input type="date" id="depFecha"></div>
+            <div class="form-group"><label>Notas</label><input type="text" id="depNotas" placeholder="Opcional"></div>
+        </div>
+        <button class="btn" onclick="addDeposito()">+ Añadir</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Progreso de Vencimientos</div>
+        <div id="depProgressContainer"><p style="color:var(--muted);font-size:0.86em;">Sin depósitos registrados.</p></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Lista</div>
+        <div style="overflow-x:auto;">
             <table class="dep-table">
-                <thead><tr><th>Nombre</th><th>Importe</th><th>Interés</th><th>Vence</th><th></th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Banco</th><th>Cantidad</th><th>TAE</th><th>Duración</th>
+                        <th>Vencimiento</th><th>Benef. Neto</th><th>Estado</th><th>Notas</th><th></th>
+                    </tr>
+                </thead>
                 <tbody id="depBody"></tbody>
             </table>
         </div>
     </div>
+</div>
 
-    <div id="tab-varios" class="tab-content">
-        <div class="section">
-            <div class="section-title">Otros Activos / Efectivo</div>
-            <div class="form-grid">
-                <div class="form-group"><label>Concepto</label><input type="text" id="varNombre" placeholder="P.ej. Cuenta Corriente"></div>
-                <div class="form-group"><label>Importe (€)</label><input type="number" id="varImporte"></div>
+<div id="modalRenovar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:480px;width:90%;position:relative;">
+        <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;font-weight:500;">Renovar Depósito</div>
+        <div style="font-weight:600;font-size:1.05em;margin-bottom:22px;" id="modalBancoNombre"></div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+            <div class="form-group"><label>Cantidad (€)</label><input type="number" id="renCantidad" step="1000"></div>
+            <div class="form-group"><label>TAE (%)</label><input type="number" id="renTAE" step="0.01"></div>
+            <div class="form-group"><label>Duración (meses)</label><input type="number" id="renDuracion"></div>
+            <div class="form-group"><label>Nueva Fecha Vencimiento</label><input type="date" id="renFecha"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:20px;"><label>Notas</label><input type="text" id="renNotas"></div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn" onclick="confirmarRenovar()">✓ Renovar</button>
+            <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="tab-varios" class="tab-content">
+    <div class="cards">
+        <div class="card">
+            <div class="card-label">Total Varios</div>
+            <div class="card-value green" id="totalVarios">0€</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Nº de Activos</div>
+            <div class="card-value blue" id="numVarios">0</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Pendiente Invertir</div>
+            <div class="card-value" id="totalAparcado">0€</div>
+            <div class="card-sub">Debería ser 0€</div>
+        </div>
+    </div>
+
+    <div id="variosAlertas"></div>
+
+    <div class="section">
+        <div class="section-title">Añadir Activo</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Nombre / Descripción</label><input type="text" id="varNombre" placeholder="Ej: ETF Bitcoin, Fondo Emergencia"></div>
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="varCategoria" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:var(--font);font-size:0.88em;">
+                    <option value="cripto">Cripto</option>
+                    <option value="emergencia">Fondo de Emergencia</option>
+                    <option value="aparcado">Aparcado (pendiente invertir)</option>
+                    <option value="otro">Otro</option>
+                </select>
             </div>
-            <button class="btn" onclick="agregarVario()">Añadir</button>
+            <div class="form-group"><label>Importe (€)</label><input type="number" id="varImporte" step="100"></div>
+            <div class="form-group"><label>Notas</label><input type="text" id="varNotas" placeholder="Opcional"></div>
         </div>
-        <div class="section">
-            <div class="section-title">Desglose Varios</div>
-            <table class="dep-table">
-                <thead><tr><th>Concepto</th><th>Importe</th><th>Acciones</th></tr></thead>
-                <tbody id="varBody"></tbody>
-            </table>
-        </div>
-        <div class="section">
-            <div class="section-title">Copia de Seguridad</div>
-            <div class="btn-row">
-                <button class="btn btn-ghost" onclick="exportarDatos()">Exportar JSON</button>
-                <label class="btn btn-ghost" style="cursor:pointer">Importar JSON<input type="file" id="importFile" style="display:none" onchange="importarDatos(event)"></label>
-            </div>
-        </div>
+        <button class="btn" onclick="addVario()">+ Añadir</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Mis Activos</div>
+        <div id="variosContainer"><p style="color:var(--muted);font-size:0.86em;">Sin activos registrados.</p></div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc, setDoc }
+        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyAPfQHq-Ou2265rCDbV6oIFkuMXS0b45W4",
@@ -353,15 +557,14 @@
     const db = getFirestore(app);
 
     let userId = null;
-    let depositos = [];
-    let varios = [];
-    let dcaProximo = [0, 0, 0];
+    let guardadoPendiente = null;
 
-    const fondos = [
-        { id: 'fund1', nombre: 'Developed World' },
-        { id: 'fund2', nombre: 'Emerging Markets' },
-        { id: 'fund3', nombre: 'Small-Cap' }
-    ];
+    window.loginGoogle = async () => {
+        try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+        catch(e) { console.error(e); alert('Error al iniciar sesión'); }
+    };
+
+    window.cerrarSesion = async () => { await signOut(auth); };
 
     onAuthStateChanged(auth, async user => {
         if (user) {
@@ -369,269 +572,674 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appScreen').style.display = 'block';
             document.getElementById('userEmail').textContent = user.email;
-            await cargarDatos();
-            calcular();
+            await cargarDatosFirestore();
+            inicializarApp();
         } else {
+            userId = null;
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('appScreen').style.display = 'none';
         }
     });
 
-    window.loginGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
-    window.cerrarSesion = () => signOut(auth);
-
-    async function cargarDatos() {
-        const snap = await getDoc(doc(db, 'usuarios', userId));
-        if (snap.exists()) {
-            const d = snap.data();
-            fondos.forEach((f, i) => {
-                document.getElementById(f.id).value = d.fondos?.[f.id] || 0;
-                document.getElementById('obj' + (i + 1)).value = d.objetivos?.['obj' + (i + 1)] || (i===0?75:i===1?13:12);
-            });
-            depositos = d.depositos || [];
-            varios = d.varios || [];
-            renderDepositos();
-            renderVarios();
-        }
+    async function cargarDatosFirestore() {
+        try {
+            const snap = await getDoc(doc(db, 'usuarios', userId));
+            if (snap.exists()) {
+                const data = snap.data();
+                depositos = data.depositos || [];
+                varios = data.varios || [];
+                snapshots = data.snapshots || JSON.parse(localStorage.getItem('snapshots') || '[]');
+                historialDCA = data.historialDCA || JSON.parse(localStorage.getItem('historialDCA') || '[]');
+                if (data.fondos) Object.entries(data.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (data.objetivos) Object.entries(data.objetivos).forEach(([k,v]) => localStorage.setItem(k, v));
+            } else {
+                snapshots = JSON.parse(localStorage.getItem('snapshots') || '[]');
+                historialDCA = JSON.parse(localStorage.getItem('historialDCA') || '[]');
+            }
+        } catch(e) { console.error('Error cargando datos:', e); }
     }
 
-    window.guardarFirestore = async () => {
+    async function guardarFirestore() {
         if (!userId) return;
-        const data = {
-            fondos: {},
-            objetivos: {},
-            depositos,
-            varios,
-            lastUpdate: new Date().toISOString()
-        };
-        fondos.forEach((f, i) => {
-            data.fondos[f.id] = parseFloat(document.getElementById(f.id).value) || 0;
-            data.objetivos['obj' + (i + 1)] = parseFloat(document.getElementById('obj' + (i + 1)).value) || 0;
-        });
-        await setDoc(doc(db, 'usuarios', userId), data, { merge: true });
-    };
+        const fondosData = {};
+        fondos.forEach(f => { fondosData[f.id] = localStorage.getItem(f.id) || '0'; });
+        const objetivosData = {};
+        fondos.forEach((f, i) => { objetivosData['obj'+(i+1)] = localStorage.getItem('obj'+(i+1)) || f.objetivoDefault.toString(); });
+        
+        try {
+            await setDoc(doc(db, 'usuarios', userId), {
+                fondos: fondosData, objetivos: objetivosData, depositos, varios,
+                snapshots, historialDCA,
+                updatedAt: new Date().toISOString()
+            });
+        } catch(e) { console.error('Error guardando:', e); }
+    }
 
+    function guardarConDebounce() {
+        if (guardadoPendiente) clearTimeout(guardadoPendiente);
+        guardadoPendiente = setTimeout(() => guardarFirestore(), 1200);
+    }
+
+    const fondos = [
+        { id: 'fund1', nombre: 'iShares Developed World', objetivoDefault: 75 },
+        { id: 'fund2', nombre: 'iShares Emerging Markets', objetivoDefault: 13 },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivoDefault: 12 },
+    ];
+
+    let depositos = [];
+    let varios = [];
+    let snapshots = [];
+    let historialDCA = [];
+
+    // TABS
     window.showTab = (name, e) => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        e.target.classList.add('active');
+        if (e && e.target) e.target.classList.add('active');
         document.getElementById('tab-' + name).classList.add('active');
+        if (name === 'dashboard') renderDashboard();
+        if (name === 'cartera') { calcular(); prerellenarDCA(); }
+        if (name === 'depositos') renderDepositos();
+        if (name === 'varios') renderVarios();
     };
 
-    window.calcular = () => {
-        let totalFondos = 0;
-        const vals = fondos.map(f => {
-            const v = parseFloat(document.getElementById(f.id).value) || 0;
-            totalFondos += v;
-            return v;
-        });
+    // CARTERA
+    window.guardarFondo = (id) => {
+        localStorage.setItem(id, document.getElementById(id).value);
+        guardarConDebounce();
+    };
 
-        // Actualizar Act % y alert de objetivos
-        let totalObj = 0;
+    window.guardarObjetivo = (id) => {
+        localStorage.setItem(id, document.getElementById(id).value);
+        guardarConDebounce();
+    };
+
+    function calcular() {
+        let total = 0;
+        const vals = fondos.map(f => { const v = parseFloat(document.getElementById(f.id).value) || 0; total += v; return v; });
+        
+        const objs = fondos.map((f, i) => parseFloat(document.getElementById('obj'+(i+1)).value) || 0);
+        const totalObj = objs.reduce((a, b) => a + b, 0);
+
         fondos.forEach((f, i) => {
-            const p = totalFondos > 0 ? (vals[i] / totalFondos * 100).toFixed(1) : 0;
-            document.getElementById('perc' + (i + 1)).textContent = p + '%';
-            totalObj += parseFloat(document.getElementById('obj' + (i + 1)).value) || 0;
+            const p = total > 0 ? (vals[i]/total*100).toFixed(1) : '0.0';
+            document.getElementById('perc'+(i+1)).textContent = p + '%';
         });
 
-        document.getElementById('objTotalAlert').innerHTML = Math.abs(totalObj - 100) > 0.1 ? 
-            `<div class="alert alert-danger">Atención: La suma de objetivos es ${totalObj.toFixed(1)}% (Debe ser 100%)</div>` : '';
+        document.getElementById('totalInvertido').textContent = fmtN(total);
+        document.getElementById('totalF1').textContent = fmtN(vals[0]);
+        document.getElementById('totalF2').textContent = fmtN(vals[1]);
+        document.getElementById('totalF3').textContent = fmtN(vals[2]);
+        document.getElementById('percF1card').textContent = total > 0 ? (vals[0]/total*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('percF2card').textContent = total > 0 ? (vals[1]/total*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('percF3card').textContent = total > 0 ? (vals[2]/total*100).toFixed(1)+'% del total' : '0%';
 
-        const totalDeps = depositos.reduce((a, b) => a + (b.importe || 0), 0);
-        const totalVarios = varios.reduce((a, b) => a + (b.importe || 0), 0);
-        const granTotal = totalFondos + totalDeps + totalVarios;
+        const p1 = total > 0 ? vals[0]/total*100 : 0;
+        const p2 = total > 0 ? vals[1]/total*100 : 0;
+        const p3 = total > 0 ? vals[2]/total*100 : 0;
 
-        document.getElementById('dashTotal').textContent = fmtN(granTotal);
-        document.getElementById('dashCartera').textContent = fmtN(totalFondos);
-        document.getElementById('dashDepositos').textContent = fmtN(totalDeps);
+        document.getElementById('distLabel').textContent = `${p1.toFixed(1)}% / ${p2.toFixed(1)}% / ${p3.toFixed(1)}%`;
+        document.getElementById('distBarActual').innerHTML = `
+            <div class="dist-bar-fill fill-f1" style="width:${p1}%"></div>
+            <div class="dist-bar-fill fill-f2" style="width:${p2}%"></div>
+            <div class="dist-bar-fill fill-f3" style="width:${p3}%"></div>`;
 
-        renderPie(totalFondos, totalDeps, totalVarios);
-    };
+        // Barra objetivo dinámica
+        document.getElementById('distLabelObj').textContent = `${objs[0].toFixed(1)}% / ${objs[1].toFixed(1)}% / ${objs[2].toFixed(1)}%`;
+        document.getElementById('distBarObjetivo').innerHTML = `
+            <div class="dist-bar-fill fill-f1" style="width:${totalObj > 0 ? (objs[0]/totalObj*100) : 0}%"></div>
+            <div class="dist-bar-fill fill-f2" style="width:${totalObj > 0 ? (objs[1]/totalObj*100) : 0}%"></div>
+            <div class="dist-bar-fill fill-f3" style="width:${totalObj > 0 ? (objs[2]/totalObj*100) : 0}%"></div>`;
 
-    // LÓGICA DE REEQUILIBRIO INTELIGENTE
-    window.calcularDCA = () => {
-        const dca = parseFloat(document.getElementById('dcaAmount').value) || 0;
-        if (dca <= 0) return;
+        const maxDesv = Math.max(Math.abs(p1-objs[0]), Math.abs(p2-objs[1]), Math.abs(p3-objs[2]));
+        const alertEl = document.getElementById('distAlert');
+        if (total === 0) { alertEl.innerHTML = ''; }
+        else if (maxDesv > 5) {
+            alertEl.innerHTML = `<div class="alert alert-warn">⚠ Desviación de ${maxDesv.toFixed(1)}pp sobre el objetivo. Corrige en el próximo DCA.</div>`;
+        } else {
+            alertEl.innerHTML = `<div class="alert alert-ok">✓ Distribución dentro del rango objetivo</div>`;
+        }
 
-        let totalActual = 0;
-        const actuales = fondos.map(f => {
-            const v = parseFloat(document.getElementById(f.id).value) || 0;
-            totalActual += v;
-            return v;
-        });
+        const objAlertEl = document.getElementById('objTotalAlert');
+        if (Math.abs(totalObj - 100) > 0.01) {
+            objAlertEl.innerHTML = `<div class="alert alert-danger">⚠ La suma de objetivos es ${totalObj.toFixed(1)}%. Debería ser 100%.</div>`;
+        } else {
+            objAlertEl.innerHTML = '';
+        }
+    }
 
-        const totalFuturo = totalActual + dca;
-        const objetivos = fondos.map((_, i) => (parseFloat(document.getElementById('obj' + (i + 1)).value) || 0) / 100);
+    function prerellenarDCA() {
+        const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
+        if (totalAparcado > 0) {
+            document.getElementById('dcaAmount').value = totalAparcado;
+            document.getElementById('dcaResult').innerHTML = `<div class="alert alert-info" style="margin-top:14px">💡 Importe prellenado con tu saldo aparcado (${fmtN(totalAparcado)}). Revisa y ajusta si quieres.</div>`;
+        }
+    }
+    
+window.calcularDCA = () => {
+    const dca = parseFloat(document.getElementById('dcaAmount').value);
+    if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
+    
+    let totalActual = 0;
+    const valoresActuales = fondos.map(f => {
+        const v = parseFloat(document.getElementById(f.id).value) || 0;
+        totalActual += v;
+        return v;
+    });
 
-        // Paso 1: Ver cuánto "falta" a cada fondo para llegar a su ideal
-        let faltantes = actuales.map((act, i) => Math.max(0, (totalFuturo * objetivos[i]) - act));
-        let sumaFaltante = faltantes.reduce((a,b) => a+b, 0);
+    const totalFuturo = totalActual + dca;
+    let html = '<div class="dca-result">';
 
-        // Paso 2: Repartir el DCA proporcionalmente a esa falta
-        dcaProximo = faltantes.map(f => sumaFaltante > 0 ? (f / sumaFaltante) * dca : 0);
+    fondos.forEach((f, i) => {
+        // ¿Cuánto debería tener este fondo sobre el TOTAL futuro?
+        const cantidadIdealSegunObjetivo = totalFuturo * (f.objetivo / 100);
+        
+        // La aportación es lo ideal menos lo que ya tengo
+        let aportacionSugerida = cantidadIdealSegunObjetivo - valoresActuales[i];
+        
+        // Si la aportación es negativa (porque ya te pasas del objetivo), 
+        // en un DCA normal se suele dejar en 0 (no vendes, solo no compras más de eso)
+        if (aportacionSugerida < 0) aportacionSugerida = 0;
 
-        let html = '<div class="dca-result">';
-        fondos.forEach((f, i) => {
-            const nuevoTotalFondo = actuales[i] + dcaProximo[i];
-            const pFut = totalFuturo > 0 ? (nuevoTotalFondo / totalFuturo * 100).toFixed(1) : 0;
-            html += `
-                <div class="dca-fund-row">
-                    <div>
-                        <div style="font-weight:500;">${f.nombre}</div>
-                        <div class="dca-nuevo">→ Final: ${fmtN(nuevoTotalFondo)} (${pFut}%)</div>
-                    </div>
-                    <div class="dca-amount" style="color:${dcaProximo[i] > 0 ? 'var(--accent)' : 'var(--muted)'}">
-                        +${fmtN(dcaProximo[i])}
-                    </div>
-                </div>`;
-        });
-        html += `<div class="alert alert-info">Ajustando para acercarse al % objetivo del nuevo total (${fmtN(totalFuturo)})</div></div>`;
-        document.getElementById('dcaResult').innerHTML = html;
-    };
+        const nuevoTotalFondo = valoresActuales[i] + aportacionSugerida;
+        const pFut = totalFuturo > 0 ? (nuevoTotalFondo / totalFuturo * 100).toFixed(1) : 0;
+
+        html += `
+            <div class="dca-fund-row">
+                <div>
+                    <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
+                    <div class="dca-nuevo">→ Nuevo total: ${fmtN(nuevoTotalFondo)} <span style="color:var(--accent2)">(${pFut}%)</span></div>
+                </div>
+                <div class="dca-amount" style="color: ${aportacionSugerida > 0 ? 'var(--accent)' : 'var(--muted)'}">
+                    +${fmtN(aportacionSugerida)}
+                </div>
+            </div>`;
+    });
+
+    html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
+            <div style="font-size:0.82em;color:var(--muted);">
+                Ajustando para alcanzar el % objetivo
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">Total tras DCA</div>
+                <div style="font-family:var(--mono);font-size:1.4em;font-weight:500;color:var(--accent);">${fmtN(totalFuturo)}</div>
+            </div>
+        </div>`;
+    html += '</div>';
+    document.getElementById('dcaResult').innerHTML = html;
+}
 
     window.aplicarDCA = () => {
-        if (dcaProximo.reduce((a,b)=>a+b, 0) === 0) { alert("Calcula primero el reequilibrio"); return; }
-        if (!confirm("¿Actualizar los saldos de la cartera con estas aportaciones?")) return;
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
+        const objs = fondos.map((f, i) => parseFloat(document.getElementById('obj'+(i+1)).value) || 0);
+        if (Math.abs(objs.reduce((a,b)=>a+b,0) - 100) > 0.1) { alert('Corrige los objetivos para que sumen 100% antes de aplicar'); return; }
 
+        if (!confirm('¿Aplicar este DCA y actualizar los importes?')) return;
         fondos.forEach((f, i) => {
-            const input = document.getElementById(f.id);
-            const actual = parseFloat(input.value) || 0;
-            input.value = (actual + dcaProximo[i]).toFixed(2);
+            const nuevo = (parseFloat(document.getElementById(f.id).value) || 0) + (dca * objs[i] / 100);
+            document.getElementById(f.id).value = nuevo.toFixed(2);
+            localStorage.setItem(f.id, nuevo.toFixed(2));
         });
-
-        dcaProximo = [0, 0, 0];
-        document.getElementById('dcaResult').innerHTML = '<div class="alert alert-ok">✓ Cartera actualizada</div>';
+        guardarFirestore();
+        registrarDCA(dca);
+        calcular();
         document.getElementById('dcaAmount').value = '';
-        calcular();
-        guardarFirestore();
+        document.getElementById('dcaResult').innerHTML = '<div class="alert alert-ok" style="margin-top:14px">✓ DCA aplicado. Importes actualizados.</div>';
     };
 
-    // FUNCIONES DEPÓSITOS Y VARIOS (TU CÓDIGO ORIGINAL)
-    window.agregarDeposito = () => {
-        const nombre = document.getElementById('depNombre').value;
-        const importe = parseFloat(document.getElementById('depImporte').value);
-        if (!nombre || !importe) return;
-        depositos.push({
+    // DEPÓSITOS
+    window.addDeposito = () => {
+        const d = {
             id: Date.now(),
-            nombre,
-            importe,
-            interes: parseFloat(document.getElementById('depInteres').value) || 0,
-            vence: document.getElementById('depVence').value
-        });
-        renderDepositos();
-        calcular();
+            banco: document.getElementById('depBanco').value.trim(),
+            cantidad: parseFloat(document.getElementById('depCantidad').value),
+            tae: parseFloat(document.getElementById('depTAE').value),
+            duracion: parseInt(document.getElementById('depDuracion').value),
+            fecha: document.getElementById('depFecha').value,
+            notas: document.getElementById('depNotas').value.trim()
+        };
+        if (!d.banco || !d.cantidad || !d.tae || !d.duracion || !d.fecha) { alert('Completa los campos obligatorios'); return; }
+        depositos.push(d);
         guardarFirestore();
-        document.getElementById('depNombre').value = ''; document.getElementById('depImporte').value = '';
+        ['depBanco','depCantidad','depTAE','depDuracion','depFecha','depNotas'].forEach(id => document.getElementById(id).value = '');
+        renderDepositos();
     };
 
-    window.borrarDeposito = (id) => {
+    window.deleteDeposito = (id) => {
+        if (!confirm('¿Eliminar este depósito?')) return;
         depositos = depositos.filter(d => d.id !== id);
-        renderDepositos(); calcular(); guardarFirestore();
+        guardarFirestore();
+        renderDepositos();
+        renderDashboard();
     };
+
+    function estadoDeposito(fechaStr) {
+        const hoy = new Date();
+        const venc = new Date(fechaStr);
+        const dias = Math.ceil((venc - hoy) / 86400000);
+        if (dias < 0) return { tipo: 'vencido', dias };
+        if (dias <= 30) return { tipo: 'proximo', dias };
+        return { tipo: 'ok', dias };
+    }
+
+    function buildProgressHTML(d) {
+        const venc = new Date(d.fecha);
+        const ini = new Date(d.fecha);
+        ini.setMonth(ini.getMonth() - d.duracion);
+        const hoy = new Date();
+        const totalDias = (venc - ini) / 86400000;
+        const diasTrans = Math.max(0, (hoy - ini) / 86400000);
+        const prog = Math.min(100, diasTrans / totalDias * 100);
+        const est = estadoDeposito(d.fecha);
+        const fillClass = est.tipo === 'vencido' ? 'vencido' : est.tipo === 'proximo' ? 'proximo' : '';
+        const tagClass = est.tipo === 'vencido' ? 'tag-danger' : est.tipo === 'proximo' ? 'tag-warn' : 'tag-ok';
+        const tagLabel = est.tipo === 'vencido' ? 'Vencido' : est.tipo === 'proximo' ? `Vence en ${est.dias}d` : `${est.dias}d restantes`;
+        const benNeto = d.cantidad * (d.tae/100) * (d.duracion/12) * 0.81;
+        return `
+            <div class="dep-progress-wrap">
+                <div class="dep-progress-header">
+                    <div>
+                        <div class="dep-progress-name">${d.banco} <span class="dep-tag ${tagClass}">${tagLabel}</span></div>
+                        <div class="dep-progress-meta">${fmtN(d.cantidad)} · ${d.tae}% TAE · ${d.duracion} meses</div>
+                    </div>
+                    <div class="dep-progress-right">
+                        ${venc.toLocaleDateString('es-ES')}<br>
+                        <span style="color:var(--accent)">+${fmtN(benNeto)} neto</span>
+                    </div>
+                </div>
+                <div class="dep-bar"><div class="dep-bar-fill ${fillClass}" style="width:${prog.toFixed(1)}%"></div></div>
+            </div>`;
+    }
 
     function renderDepositos() {
-        const body = document.getElementById('depBody');
-        body.innerHTML = depositos.map(d => `
-            <tr>
-                <td><div style="font-weight:500">${d.nombre}</div></td>
-                <td class="dep-mono">${fmtN(d.importe)}</td>
-                <td class="dep-mono">${d.interes}%</td>
-                <td><span class="dep-tag ${d.vence ? 'tag-ok' : 'tag-warn'}">${d.vence || 'Cuenta'}</span></td>
-                <td style="text-align:right"><button onclick="borrarDeposito(${d.id})" class="btn btn-del">Eliminar</button></td>
-            </tr>
-        `).join('');
+        let totalDep = 0, totalBenef = 0, sumPond = 0, sumPeso = 0;
+
+        if (depositos.length === 0) {
+            document.getElementById('depProgressContainer').innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Sin depósitos registrados.</p>';
+            document.getElementById('depBody').innerHTML = '';
+            ['totalDepositos','beneficioDepositos'].forEach(id => document.getElementById(id).textContent = '0€');
+            document.getElementById('taePromedio').textContent = '0%';
+            return;
+        }
+
+        document.getElementById('depProgressContainer').innerHTML = depositos.map(buildProgressHTML).join('');
+
+        document.getElementById('depBody').innerHTML = depositos.map(d => {
+            const est = estadoDeposito(d.fecha);
+            const benNeto = d.cantidad * (d.tae/100) * (d.duracion/12) * 0.81;
+            totalDep += d.cantidad;
+            totalBenef += benNeto;
+            const peso = d.cantidad * (d.duracion/12);
+            sumPond += d.tae * peso; sumPeso += peso;
+            const tagClass = est.tipo === 'vencido' ? 'tag-danger' : est.tipo === 'proximo' ? 'tag-warn' : 'tag-ok';
+            const tagLabel = est.tipo === 'vencido' ? 'Vencido' : `${est.dias}d`;
+            return `<tr>
+                <td>${d.banco}</td>
+                <td class="dep-mono">${fmtN(d.cantidad)}</td>
+                <td class="dep-mono">${d.tae}%</td>
+                <td class="dep-mono">${d.duracion}m</td>
+                <td class="dep-mono">${new Date(d.fecha).toLocaleDateString('es-ES')}</td>
+                <td class="dep-mono" style="color:var(--accent)">+${fmtN(benNeto)}</td>
+                <td><span class="dep-tag ${tagClass}">${tagLabel}</span></td>
+                <td style="color:var(--muted);font-size:0.8em">${d.notas||'—'}</td>
+                <td style="display:flex;gap:6px;align-items:center;">
+                    <button class="btn btn-ghost" style="padding:6px 10px;font-size:0.76em;" onclick="abrirRenovar(${d.id})">↺ Renovar</button>
+                    <button class="btn btn-del" onclick="deleteDeposito(${d.id})">✕</button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('totalDepositos').textContent = fmtN(totalDep);
+        document.getElementById('beneficioDepositos').textContent = fmtN(totalBenef);
+        document.getElementById('taePromedio').textContent = (sumPeso > 0 ? sumPond/sumPeso : 0).toFixed(2) + '%';
     }
 
-    window.agregarVario = () => {
-        const nombre = document.getElementById('varNombre').value;
-        const importe = parseFloat(document.getElementById('varImporte').value);
-        if (!nombre || !importe) return;
-        varios.push({ id: Date.now(), nombre, importe });
-        renderVarios(); calcular(); guardarFirestore();
-        document.getElementById('varNombre').value = ''; document.getElementById('varImporte').value = '';
-    };
+    // DASHBOARD
+    function renderDashboard() {
+        let totalCartera = 0;
+        fondos.forEach(f => totalCartera += parseFloat(localStorage.getItem(f.id)) || 0);
+        let totalDep = depositos.reduce((s, d) => s + d.cantidad, 0);
+        let totalVar = varios.reduce((s, v) => s + v.importe, 0);
+        const patrimonio = totalCartera + totalDep + totalVar;
 
-    window.borrarVario = (id) => {
-        varios = varios.filter(v => v.id !== id);
-        renderVarios(); calcular(); guardarFirestore();
-    };
+        document.getElementById('dashTotal').textContent = fmtN(patrimonio);
+        document.getElementById('dashCartera').textContent = fmtN(totalCartera);
+        document.getElementById('dashCarteraPerc').textContent = patrimonio > 0 ? (totalCartera/patrimonio*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('dashDepositos').textContent = fmtN(totalDep);
+        document.getElementById('dashDepositosPerc').textContent = patrimonio > 0 ? (totalDep/patrimonio*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('dashVarios').textContent = fmtN(totalVar);
+        document.getElementById('dashVariosPerc').textContent = patrimonio > 0 ? (totalVar/patrimonio*100).toFixed(1)+'% del total' : '0%';
 
-    function renderVarios() {
-        const body = document.getElementById('varBody');
-        body.innerHTML = varios.map(v => `
-            <tr>
-                <td>${v.nombre}</td>
-                <td class="dep-mono">${fmtN(v.importe)}</td>
-                <td><button onclick="borrarVario(${v.id})" class="btn btn-del">Eliminar</button></td>
-            </tr>
-        `).join('');
+        let alertas = '';
+        depositos.forEach(d => {
+            const est = estadoDeposito(d.fecha);
+            if (est.tipo === 'vencido') alertas += `<div class="alert alert-danger">⚠ Depósito en ${d.banco} (${fmtN(d.cantidad)}) ha vencido.</div>`;
+            else if (est.tipo === 'proximo') alertas += `<div class="alert alert-warn">🔔 Depósito en ${d.banco} (${fmtN(d.cantidad)}) vence en ${est.dias} días.</div>`;
+        });
+        const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
+        if (totalAparcado > 0) alertas += `<div class="alert alert-warn">⚡ Tienes ${fmtN(totalAparcado)} aparcados sin invertir.</div>`;
+        document.getElementById('dashAlertas').innerHTML = alertas;
+
+        drawPie(totalCartera, totalDep, totalVar);
+
+        const progEl = document.getElementById('dashDepProgress');
+        progEl.innerHTML = depositos.length === 0
+            ? '<p style="color:var(--muted);font-size:0.86em;">Sin depósitos registrados.</p>'
+            : depositos.map(buildProgressHTML).join('');
+
+        renderRentabilidad(totalCartera);
+        guardarSnapshotPatrimonio(patrimonio);
+        renderEvolucion();
+        renderHistorialDCA();
     }
 
-    function renderPie(f, d, v) {
-        const canvas = document.getElementById('pieChart');
-        const ctx = canvas.getContext('2d');
-        const total = f + d + v;
-        ctx.clearRect(0,0,190,190);
-        if (total === 0) return;
+    // ======= RENTABILIDAD ESTIMADA =======
+    const rentabilidades = [
+        { id: 'fund1', nombre: 'iShares Developed World', rentAnual: 10.2 },
+        { id: 'fund2', nombre: 'iShares Emerging Markets', rentAnual: 6.1 },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', rentAnual: 11.3 },
+    ];
 
-        let start = -Math.PI/2;
-        const data = [
-            { val: f, color: '#60a5fa', name: 'Fondos' },
-            { val: d, color: '#4ade80', name: 'Depósitos' },
-            { val: v, color: '#a78bfa', name: 'Varios' }
-        ];
-
-        let legendHtml = '';
-        data.forEach(item => {
-            if (item.val > 0) {
-                const slice = (item.val / total) * 2 * Math.PI;
-                ctx.beginPath(); ctx.moveTo(95,95); ctx.arc(95,95,80,start,start+slice);
-                ctx.fillStyle = item.color; ctx.fill();
-                start += slice;
-            }
-            legendHtml += `
-                <div class="legend-item">
-                    <div class="legend-dot" style="background:${item.color}"></div>
-                    <div class="legend-name">${item.name}</div>
-                    <div class="legend-val">${fmtN(item.val)}</div>
-                    <div style="font-size:0.75em;color:var(--muted);width:40px;text-align:right">${total>0?(item.val/total*100).toFixed(0):0}%</div>
+    function renderRentabilidad(totalCartera) {
+        const el = document.getElementById('rentabilidadContainer');
+        if (totalCartera === 0) {
+            el.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Introduce importes en la Cartera DCA para ver la rentabilidad estimada.</p>';
+            return;
+        }
+        let rentPonderada = 0;
+        let html = '';
+        rentabilidades.forEach(r => {
+            const val = parseFloat(localStorage.getItem(r.id)) || 0;
+            const peso = totalCartera > 0 ? val / totalCartera : 0;
+            rentPonderada += peso * r.rentAnual;
+            html += `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                    <div style="font-size:0.88em;">${r.nombre}</div>
+                    <div style="display:flex;gap:20px;align-items:center;">
+                        <span style="font-size:0.78em;color:var(--muted);">${(peso*100).toFixed(1)}% del total</span>
+                        <span style="font-family:var(--mono);font-size:0.88em;color:var(--accent);">~${r.rentAnual}% anual</span>
+                    </div>
                 </div>`;
         });
-        document.getElementById('pieLegend').innerHTML = legendHtml;
-        ctx.beginPath(); ctx.arc(95,95,50,0,2*Math.PI); ctx.fillStyle = '#181c27'; ctx.fill();
+        const rentAnualEst = totalCartera * (rentPonderada / 100);
+        html += `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:4px;">
+                <div style="font-size:0.82em;color:var(--muted);">Rentabilidad ponderada estimada <span style="font-size:0.85em;">(histórica, no garantizada)</span></div>
+                <div style="text-align:right;">
+                    <div style="font-family:var(--mono);font-size:1.2em;font-weight:500;color:var(--accent);">~${rentPonderada.toFixed(1)}% anual</div>
+                    <div style="font-size:0.78em;color:var(--muted);">≈ ${fmtN(rentAnualEst)} / año</div>
+                </div>
+            </div>`;
+        el.innerHTML = html;
     }
 
-    function fmtN(n) { return (n || 0).toLocaleString('es-ES', {maximumFractionDigits:0}) + '€'; }
+    // ======= EVOLUCIÓN PATRIMONIO (snapshots) =======
+    function guardarSnapshotPatrimonio(patrimonio) {
+        if (patrimonio === 0) return;
+        const hoy = new Date().toISOString().split('T')[0];
+        const idx = snapshots.findIndex(s => s.fecha === hoy);
+        if (idx >= 0) {
+            snapshots[idx].valor = patrimonio;
+        } else {
+            snapshots.push({ fecha: hoy, valor: patrimonio });
+        }
+        localStorage.setItem('snapshots', JSON.stringify(snapshots));
+        guardarConDebounce();
+    }
 
-    // EXPORT/IMPORT (COPIADO DE TU ORIGINAL)
-    window.exportarDatos = () => {
-        const data = { fondos: {}, objetivos: {}, depositos, varios };
-        fondos.forEach((f, i) => {
-            data.fondos[f.id] = document.getElementById(f.id).value;
-            data.objetivos['obj'+(i+1)] = document.getElementById('obj'+(i+1)).value;
+    function renderEvolucion() {
+        const canvas = document.getElementById('evolucionChart');
+        const emptyEl = document.getElementById('evolucionEmpty');
+        if (snapshots.length < 2) {
+            canvas.style.display = 'none';
+            emptyEl.style.display = 'block';
+            return;
+        }
+        canvas.style.display = 'block';
+        emptyEl.style.display = 'none';
+
+        const sorted = [...snapshots].sort((a, b) => a.fecha.localeCompare(b.fecha));
+        const W = canvas.offsetWidth || 600;
+        const H = 200;
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+
+        const vals = sorted.map(s => s.valor);
+        const minV = Math.min(...vals) * 0.97;
+        const maxV = Math.max(...vals) * 1.03;
+        const pad = { top: 16, bottom: 28, left: 10, right: 10 };
+
+        const xOf = i => pad.left + (i / (sorted.length - 1)) * (W - pad.left - pad.right);
+        const yOf = v => pad.top + (1 - (v - minV) / (maxV - minV)) * (H - pad.top - pad.bottom);
+
+        ctx.beginPath();
+        ctx.moveTo(xOf(0), yOf(vals[0]));
+        sorted.forEach((s, i) => ctx.lineTo(xOf(i), yOf(s.valor)));
+        ctx.lineTo(xOf(sorted.length - 1), H - pad.bottom);
+        ctx.lineTo(xOf(0), H - pad.bottom);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+        grad.addColorStop(0, 'rgba(74,222,128,0.25)');
+        grad.addColorStop(1, 'rgba(74,222,128,0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(xOf(0), yOf(vals[0]));
+        sorted.forEach((s, i) => ctx.lineTo(xOf(i), yOf(s.valor)));
+        ctx.strokeStyle = '#4ade80';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#4ade80';
+        sorted.forEach((s, i) => {
+            ctx.beginPath();
+            ctx.arc(xOf(i), yOf(s.valor), 3, 0, Math.PI * 2);
+            ctx.fill();
         });
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+
+        ctx.fillStyle = '#6b7a99';
+        ctx.font = '10px DM Mono';
+        ctx.textAlign = 'left';
+        ctx.fillText(sorted[0].fecha, pad.left, H - 6);
+        ctx.textAlign = 'right';
+        ctx.fillText(sorted[sorted.length - 1].fecha, W - pad.right, H - 6);
+
+        ctx.fillStyle = '#4ade80';
+        ctx.font = 'bold 12px DM Mono';
+        ctx.textAlign = 'right';
+        ctx.fillText(fmtN(vals[vals.length - 1]), W - pad.right, yOf(vals[vals.length - 1]) - 8);
+    }
+
+    // ======= HISTORIAL DCA =======
+    function registrarDCA(importe) {
+        historialDCA.push({
+            fecha: new Date().toISOString().split('T')[0],
+            hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            importe
+        });
+        localStorage.setItem('historialDCA', JSON.stringify(historialDCA));
+        guardarConDebounce();
+    }
+
+    function renderHistorialDCA() {
+        const el = document.getElementById('historialDCAContainer');
+        if (historialDCA.length === 0) {
+            el.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Aún no has aplicado ningún DCA.</p>';
+            return;
+        }
+        const sorted = [...historialDCA].reverse();
+        const totalAportado = historialDCA.reduce((s, h) => s + h.importe, 0);
+        el.innerHTML = `
+            <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+                <div style="font-size:0.82em;color:var(--muted);">Total aportado via DCA</div>
+                <div style="font-family:var(--mono);font-size:1em;color:var(--accent);font-weight:500;">${fmtN(totalAportado)}</div>
+            </div>
+            ${sorted.slice(0, 10).map(h => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+                    <div style="font-size:0.84em;color:var(--muted);">${h.fecha} <span style="font-size:0.85em">${h.hora}</span></div>
+                    <div style="font-family:var(--mono);font-size:0.92em;color:var(--accent);">+${fmtN(h.importe)}</div>
+                </div>`).join('')}
+        `;
+    }
+
+    function drawPie(cartera, deps, variosTotal) {
+        const canvas = document.getElementById('pieChart');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 190, 190);
+        const patrimonio = cartera + deps + (variosTotal || 0);
+        const cx = 95, cy = 95, r = 75, rInner = 44;
+        const colors = ['#4ade80', '#60a5fa', '#f59e0b'];
+        const labels = ['Fondos', 'Depósitos', 'Varios'];
+        const vals = [cartera, deps, variosTotal || 0];
+        const totalPositivo = vals.reduce((s, v) => s + Math.max(0, v), 0);
+
+        if (totalPositivo === 0) {
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+            ctx.fillStyle = '#2a3045'; ctx.fill();
+        } else {
+            let angle = -Math.PI / 2;
+            vals.forEach((v, i) => {
+                const val = Math.max(0, v);
+                if (val === 0) return;
+                const slice = (val / totalPositivo) * Math.PI * 2;
+                ctx.beginPath(); ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, angle, angle + slice);
+                ctx.closePath(); ctx.fillStyle = colors[i]; ctx.fill();
+                angle += slice;
+            });
+        }
+        ctx.beginPath(); ctx.arc(cx, cy, rInner, 0, Math.PI*2);
+        ctx.fillStyle = '#181c27'; ctx.fill();
+        ctx.fillStyle = '#e8ecf4'; ctx.font = 'bold 14px DM Mono';
+        ctx.textAlign = 'center'; ctx.fillText(fmtShort(patrimonio), cx, cy-3);
+        ctx.fillStyle = '#6b7a99'; ctx.font = '11px DM Sans';
+        ctx.fillText('total', cx, cy+13);
+
+        document.getElementById('pieLegend').innerHTML = vals.map((v, i) => v !== 0 ? `
+            <div class="legend-item">
+                <div class="legend-dot" style="background:${colors[i]}"></div>
+                <div class="legend-name">${labels[i]}</div>
+                <div class="legend-val">${fmtN(v)}</div>
+                <div class="legend-perc">${patrimonio !== 0 ? (v/patrimonio*100).toFixed(1)+'%' : '0%'}</div>
+            </div>` : '').join('');
+    }
+
+    // RENOVAR DEPÓSITO
+    let renovarId = null;
+    window.abrirRenovar = (id) => {
+        const d = depositos.find(d => d.id === id);
+        if (!d) return;
+        renovarId = id;
+        document.getElementById('modalBancoNombre').textContent = d.banco;
+        document.getElementById('renCantidad').value = d.cantidad;
+        document.getElementById('renTAE').value = d.tae;
+        document.getElementById('renDuracion').value = d.duracion;
+        document.getElementById('renNotas').value = d.notas || '';
+        const nuevaFecha = new Date();
+        nuevaFecha.setMonth(nuevaFecha.getMonth() + d.duracion);
+        document.getElementById('renFecha').value = nuevaFecha.toISOString().split('T')[0];
+        document.getElementById('modalRenovar').style.display = 'flex';
+    };
+    window.cerrarModal = () => { document.getElementById('modalRenovar').style.display = 'none'; };
+    window.confirmarRenovar = () => {
+        const d = depositos.find(d => d.id === renovarId);
+        if (!d) return;
+        d.cantidad = parseFloat(document.getElementById('renCantidad').value);
+        d.tae = parseFloat(document.getElementById('renTAE').value);
+        d.duracion = parseInt(document.getElementById('renDuracion').value);
+        d.fecha = document.getElementById('renFecha').value;
+        d.notas = document.getElementById('renNotas').value;
+        guardarFirestore(); cerrarModal(); renderDepositos(); renderDashboard();
+    };
+
+    // VARIOS
+    const categoriaLabels = { cripto: 'Cripto', emergencia: 'Emergencia', aparcado: 'Aparcado', otro: 'Otro' };
+    const categoriaColors = { cripto: '#f59e0b', emergencia: '#34d399', aparcado: '#f87171', otro: '#a78bfa' };
+
+    window.updateVarioImporte = (id, valor) => {
+        const v = varios.find(v => v.id === id);
+        if (!v) return;
+        v.importe = parseFloat(valor) || 0;
+        guardarConDebounce(); renderDashboard();
+    };
+    window.addVario = () => {
+        const v = {
+            id: Date.now(),
+            nombre: document.getElementById('varNombre').value.trim(),
+            categoria: document.getElementById('varCategoria').value,
+            importe: parseFloat(document.getElementById('varImporte').value),
+            notas: document.getElementById('varNotas').value.trim()
+        };
+        if (!v.nombre || isNaN(v.importe)) { alert('Completa nombre e importe'); return; }
+        varios.push(v); guardarFirestore(); renderVarios(); renderDashboard();
+        ['varNombre','varImporte','varNotas'].forEach(id => document.getElementById(id).value = '');
+    };
+    window.deleteVario = (id) => {
+        if (!confirm('¿Eliminar este activo?')) return;
+        varios = varios.filter(v => v.id !== id); guardarFirestore(); renderVarios(); renderDashboard();
+    };
+    function renderVarios() {
+        const totalV = varios.reduce((s, v) => s + v.importe, 0);
+        const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
+        document.getElementById('totalVarios').textContent = fmtN(totalV);
+        document.getElementById('numVarios').textContent = varios.length;
+        document.getElementById('totalAparcado').textContent = fmtN(totalAparcado);
+        document.getElementById('variosContainer').innerHTML = varios.map(v => `
+            <div style="display:grid;grid-template-columns:1fr 150px auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);">
+                <div>
+                    <div style="font-weight:500;font-size:0.92em;">${v.nombre}
+                        <span style="font-size:0.68em;font-weight:600;padding:2px 8px;border-radius:20px;background:${categoriaColors[v.categoria]}22;color:${categoriaColors[v.categoria]};border:1px solid ${categoriaColors[v.categoria]}44;margin-left:6px;">${categoriaLabels[v.categoria]}</span>
+                    </div>
+                </div>
+                <div class="input-wrap"><input type="number" value="${v.importe}" oninput="updateVarioImporte(${v.id}, this.value)"></div>
+                <button class="btn btn-del" onclick="deleteVario(${v.id})">✕</button>
+            </div>`).join('');
+    }
+
+    // EXPORT/IMPORT
+    window.exportarDatos = () => {
+        const datos = { fondos: {}, objetivos: {}, depositos, varios };
+        fondos.forEach((f, i) => {
+            datos.fondos[f.id] = localStorage.getItem(f.id);
+            datos.objetivos['obj'+(i+1)] = localStorage.getItem('obj'+(i+1));
+        });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }));
+        a.download = `backup-dca-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
     };
 
     window.importarDatos = (e) => {
         const file = e.target.files[0]; if (!file) return;
         const reader = new FileReader();
-        reader.onload = async ev => {
+        reader.onload = ev => {
             try {
-                const d = JSON.parse(ev.target.result);
-                if (confirm('¿Importar y sobrescribir todo?')) {
-                    depositos = d.depositos || []; varios = d.varios || [];
-                    await setDoc(doc(db, 'usuarios', userId), d, { merge: true });
-                    location.reload();
-                }
-            } catch { alert('Error al leer el archivo'); }
+                const datos = JSON.parse(ev.target.result);
+                if (datos.fondos) Object.entries(datos.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (datos.objetivos) Object.entries(datos.objetivos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (datos.depositos) depositos = datos.depositos;
+                if (datos.varios) varios = datos.varios;
+                guardarFirestore().then(() => location.reload());
+            } catch { alert('Archivo no válido'); }
         };
         reader.readAsText(file);
     };
+
+    function fmtN(n) { return (n || 0).toLocaleString('es-ES', {maximumFractionDigits:0}) + '€'; }
+    function fmtShort(n) { return n >= 1000 ? Math.round(n/1000)+'k€' : fmtN(n); }
+
+    function inicializarApp() {
+        fondos.forEach((f, i) => { 
+            const v = localStorage.getItem(f.id); if (v) document.getElementById(f.id).value = v;
+            const o = localStorage.getItem('obj'+(i+1)); if (o) document.getElementById('obj'+(i+1)).value = o;
+        });
+        calcular(); renderDepositos(); renderVarios(); renderDashboard();
+    }
 </script>
+</div>
 </body>
 </html>
