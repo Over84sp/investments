@@ -78,7 +78,7 @@
         }
 
         .fondo-row {
-            display: grid; grid-template-columns: 1fr 60px 60px 140px;
+            display: grid; grid-template-columns: 1fr 70px 60px 140px;
             gap: 16px; align-items: center; padding: 14px 0;
             border-bottom: 1px solid var(--border);
         }
@@ -367,8 +367,8 @@
             <div class="dist-bar" id="distBarActual"></div>
         </div>
         <div class="dist-bar-wrap">
-            <div class="dist-bar-label"><span>Objetivo</span><span>75% / 13% / 12%</span></div>
-            <div class="dist-bar">
+            <div class="dist-bar-label"><span>Objetivo</span><span id="distLabelObjetivo">75% / 13% / 12%</span></div>
+            <div class="dist-bar" id="distBarObjetivo">
                 <div class="dist-bar-fill fill-f1" style="width:75%"></div>
                 <div class="dist-bar-fill fill-f2" style="width:13%"></div>
                 <div class="dist-bar-fill fill-f3" style="width:12%"></div>
@@ -381,7 +381,7 @@
         <div class="section-title">Mis Fondos</div>
         <div class="fondo-row" style="padding-bottom:8px;">
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Fondo</div>
-            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Obj.</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Obj. %</div>
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Act.</div>
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Importe</div>
         </div>
@@ -390,7 +390,10 @@
                 <div class="fondo-nombre">iShares Developed World <span class="fondo-badge">RV</span></div>
                 <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06%</div>
             </div>
-            <div class="fondo-obj">75%</div>
+            <div class="fondo-obj">
+                <input type="number" id="objInput0" value="75" min="0" max="100" step="1" oninput="guardarObjetivo(0,this.value)"
+                    style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
+            </div>
             <div class="fondo-perc" id="perc1">0%</div>
             <div class="input-wrap"><input type="number" id="fund1" value="0" step="100" oninput="guardarFondo('fund1');calcular();"></div>
         </div>
@@ -399,7 +402,10 @@
                 <div class="fondo-nombre">iShares Emerging Markets <span class="fondo-badge">RV</span></div>
                 <div class="fondo-isin">IE00BYWYCC39 · TER 0.20%</div>
             </div>
-            <div class="fondo-obj">13%</div>
+            <div class="fondo-obj">
+                <input type="number" id="objInput1" value="13" min="0" max="100" step="1" oninput="guardarObjetivo(1,this.value)"
+                    style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
+            </div>
             <div class="fondo-perc" id="perc2">0%</div>
             <div class="input-wrap"><input type="number" id="fund2" value="0" step="100" oninput="guardarFondo('fund2');calcular();"></div>
         </div>
@@ -408,10 +414,14 @@
                 <div class="fondo-nombre">Vanguard Global Small-Cap <span class="fondo-badge">RV</span></div>
                 <div class="fondo-isin">IE00B42W4L06 · TER 0.29%</div>
             </div>
-            <div class="fondo-obj">12%</div>
+            <div class="fondo-obj">
+                <input type="number" id="objInput2" value="12" min="0" max="100" step="1" oninput="guardarObjetivo(2,this.value)"
+                    style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
+            </div>
             <div class="fondo-perc" id="perc3">0%</div>
             <div class="input-wrap"><input type="number" id="fund3" value="0" step="100" oninput="guardarFondo('fund3');calcular();"></div>
         </div>
+        <div id="objSumWarn"></div>
     </div>
 
     <div class="section">
@@ -599,6 +609,9 @@
                 snapshots = data.snapshots || JSON.parse(localStorage.getItem('snapshots') || '[]');
                 historialDCA = data.historialDCA || JSON.parse(localStorage.getItem('historialDCA') || '[]');
                 if (data.fondos) Object.entries(data.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (data.objetivos) Object.entries(data.objetivos).forEach(([k,v]) => {
+                    localStorage.setItem('obj_' + k, v);
+                });
             } else {
                 snapshots = JSON.parse(localStorage.getItem('snapshots') || '[]');
                 historialDCA = JSON.parse(localStorage.getItem('historialDCA') || '[]');
@@ -609,10 +622,14 @@
     async function guardarFirestore() {
         if (!userId) return;
         const fondosData = {};
-        fondos.forEach(f => { fondosData[f.id] = localStorage.getItem(f.id) || '0'; });
+        const objetivosData = {};
+        fondos.forEach(f => {
+            fondosData[f.id] = localStorage.getItem(f.id) || '0';
+            objetivosData[f.id] = f.objetivo;
+        });
         try {
             await setDoc(doc(db, 'usuarios', userId), {
-                fondos: fondosData, depositos, varios,
+                fondos: fondosData, objetivos: objetivosData, depositos, varios,
                 snapshots, historialDCA,
                 updatedAt: new Date().toISOString()
             });
@@ -629,6 +646,13 @@
         { id: 'fund2', nombre: 'iShares Emerging Markets', objetivo: 13 },
         { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12 },
     ];
+    // Carga objetivos guardados (si existen)
+    function cargarObjetivos() {
+        fondos.forEach(f => {
+            const saved = localStorage.getItem('obj_' + f.id);
+            if (saved !== null) f.objetivo = parseFloat(saved);
+        });
+    }
 
     let depositos = [];
     let varios = [];
@@ -680,7 +704,7 @@
             <div class="dist-bar-fill fill-f2" style="width:${p2}%"></div>
             <div class="dist-bar-fill fill-f3" style="width:${p3}%"></div>`;
 
-        const maxDesv = Math.max(Math.abs(p1-75), Math.abs(p2-13), Math.abs(p3-12));
+        const maxDesv = Math.max(...fondos.map((f, i) => Math.abs((total > 0 ? vals[i]/total*100 : 0) - f.objetivo)));
         const alertEl = document.getElementById('distAlert');
         if (total === 0) { alertEl.innerHTML = ''; return; }
         if (maxDesv > 5) {
@@ -698,24 +722,80 @@
         }
     }
 
+    window.guardarObjetivo = (idx, val) => {
+        const v = parseFloat(val);
+        if (isNaN(v) || v < 0) return;
+        fondos[idx].objetivo = v;
+        localStorage.setItem('obj_' + fondos[idx].id, v);
+        const suma = fondos.reduce((s, f) => s + f.objetivo, 0);
+        const warnEl = document.getElementById('objSumWarn');
+        if (Math.abs(suma - 100) > 0.05) {
+            warnEl.innerHTML = `<div class="alert alert-warn" style="margin-top:10px">⚠ Los objetivos suman ${suma.toFixed(1)}% — deben sumar exactamente 100%.</div>`;
+        } else {
+            warnEl.innerHTML = `<div class="alert alert-ok" style="margin-top:10px">✓ Objetivos correctos (100%)</div>`;
+        }
+        // Actualizar barra objetivo
+        renderBarraObjetivo();
+        calcular();
+        guardarConDebounce();
+    };
+
+    function renderBarraObjetivo() {
+        const suma = fondos.reduce((s, f) => s + f.objetivo, 0);
+        // barra objetivo dinámica
+        const bar = document.getElementById('distBarObjetivo');
+        if (bar) {
+            bar.innerHTML = fondos.map((f, i) => `<div class="dist-bar-fill fill-f${i+1}" style="width:${suma>0?f.objetivo/suma*100:0}%"></div>`).join('');
+        }
+        const lbl = document.getElementById('distLabelObjetivo');
+        if (lbl) lbl.textContent = fondos.map(f => f.objetivo.toFixed(1)+'%').join(' / ');
+    }
+
     window.calcularDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
-        let total = 0;
-        fondos.forEach(f => total += parseFloat(document.getElementById(f.id).value) || 0);
-        const totalFut = total + dca;
+
+        const suma = fondos.reduce((s, f) => s + f.objetivo, 0);
+        if (Math.abs(suma - 100) > 0.5) {
+            document.getElementById('dcaResult').innerHTML = `<div class="alert alert-danger" style="margin-top:14px">⚠ Los objetivos no suman 100% (${suma.toFixed(1)}%). Corrígelos antes de calcular.</div>`;
+            return;
+        }
+
+        const actuales = fondos.map(f => parseFloat(document.getElementById(f.id).value) || 0);
+        const totalActual = actuales.reduce((s, v) => s + v, 0);
+        const totalFut = totalActual + dca;
+        const objetivos = fondos.map(f => f.objetivo / 100);
+        const targets = objetivos.map(o => totalFut * o);
+        let necesidades = targets.map((t, i) => Math.max(0, t - actuales[i]));
+        const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
+
+        let aportaciones;
+        if (sumaNecesidades <= 0) {
+            aportaciones = objetivos.map(o => dca * o);
+        } else if (sumaNecesidades <= dca) {
+            const exceso = dca - sumaNecesidades;
+            aportaciones = necesidades.map((n, i) => n + exceso * objetivos[i]);
+        } else {
+            const factor = dca / sumaNecesidades;
+            aportaciones = necesidades.map(n => n * factor);
+        }
 
         let html = '<div class="dca-result">';
-        fondos.forEach(f => {
-            const imp = dca * f.objetivo / 100;
-            const actual = parseFloat(document.getElementById(f.id).value) || 0;
-            const nuevo = actual + imp;
+        fondos.forEach((f, i) => {
+            const imp = aportaciones[i];
+            const nuevo = actuales[i] + imp;
             const pFut = totalFut > 0 ? (nuevo/totalFut*100).toFixed(1) : 0;
+            const desv = (parseFloat(pFut) - f.objetivo).toFixed(1);
+            const desvColor = Math.abs(parseFloat(desv)) < 0.5 ? 'var(--accent)' : Math.abs(parseFloat(desv)) < 2 ? 'var(--warning)' : 'var(--danger)';
             html += `
                 <div class="dca-fund-row">
                     <div>
                         <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
-                        <div class="dca-nuevo">→ Nuevo total: ${fmtN(nuevo)} <span style="color:var(--accent2)">(${pFut}%)</span></div>
+                        <div class="dca-nuevo">
+                            → Nuevo total: ${fmtN(nuevo)}
+                            <span style="color:var(--accent2)">(${pFut}%)</span>
+                            <span style="color:${desvColor};font-size:0.85em"> ${parseFloat(desv)>=0?'+':''}${desv}pp vs obj. ${f.objetivo}%</span>
+                        </div>
                     </div>
                     <div class="dca-amount">+${fmtN(imp)}</div>
                 </div>`;
@@ -723,7 +803,7 @@
         html += `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
                 <div style="font-size:0.82em;color:var(--muted);">
-                    Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(total)}</span>
+                    Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(totalActual)}</span>
                     &nbsp;+&nbsp;
                     aportación <span style="font-family:var(--mono);color:var(--accent);">${fmtN(dca)}</span>
                 </div>
@@ -734,14 +814,33 @@
             </div>`;
         html += '</div>';
         document.getElementById('dcaResult').innerHTML = html;
+    };
+
+    // Función auxiliar compartida para calcular aportaciones equilibradas
+    function calcularAportacionesEquilibradas(dca) {
+        const actuales = fondos.map(f => parseFloat(document.getElementById(f.id).value) || 0);
+        const totalActual = actuales.reduce((s, v) => s + v, 0);
+        const totalFut = totalActual + dca;
+        const objetivos = fondos.map(f => f.objetivo / 100);
+        const targets = objetivos.map(o => totalFut * o);
+        let necesidades = targets.map((t, i) => Math.max(0, t - actuales[i]));
+        const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
+        if (sumaNecesidades <= 0) return objetivos.map(o => dca * o);
+        if (sumaNecesidades <= dca) {
+            const exceso = dca - sumaNecesidades;
+            return necesidades.map((n, i) => n + exceso * objetivos[i]);
+        }
+        const factor = dca / sumaNecesidades;
+        return necesidades.map(n => n * factor);
     }
 
     window.aplicarDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
         if (!confirm('¿Aplicar este DCA y actualizar los importes?')) return;
-        fondos.forEach(f => {
-            const nuevo = (parseFloat(document.getElementById(f.id).value) || 0) + (dca * f.objetivo / 100);
+        const aportaciones = calcularAportacionesEquilibradas(dca);
+        fondos.forEach((f, i) => {
+            const nuevo = (parseFloat(document.getElementById(f.id).value) || 0) + aportaciones[i];
             document.getElementById(f.id).value = nuevo.toFixed(2);
             localStorage.setItem(f.id, nuevo.toFixed(2));
         });
@@ -1270,7 +1369,14 @@
 
     // INIT (llamado tras login)
     function inicializarApp() {
+        cargarObjetivos();
         fondos.forEach(f => { const v = localStorage.getItem(f.id); if (v) document.getElementById(f.id).value = v; });
+        // Rellenar inputs de objetivo
+        fondos.forEach((f, i) => {
+            const el = document.getElementById('objInput' + i);
+            if (el) el.value = f.objetivo;
+        });
+        renderBarraObjetivo();
         calcular();
         renderDepositos();
         renderVarios();
