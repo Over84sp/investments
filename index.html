@@ -78,7 +78,7 @@
         }
 
         .fondo-row {
-            display: grid; grid-template-columns: 1fr 60px 60px 140px;
+            display: grid; grid-template-columns: 1fr 80px 60px 140px;
             gap: 16px; align-items: center; padding: 14px 0;
             border-bottom: 1px solid var(--border);
         }
@@ -99,11 +99,13 @@
             padding: 9px 32px 9px 11px; color: var(--text); font-family: var(--mono);
             font-size: 0.87em; width: 100%; transition: border-color 0.2s;
         }
+        .input-wrap.small input { padding: 6px 20px 6px 8px; }
         .input-wrap input:focus { outline: none; border-color: var(--accent); }
         .input-wrap::after {
             content: '€'; position: absolute; right: 10px; top: 50%;
             transform: translateY(-50%); color: var(--muted); font-size: 0.82em; pointer-events: none;
         }
+        .input-wrap.perc-input::after { content: '%'; }
 
         .dist-bar-wrap { margin: 4px 0 16px; }
         .dist-bar-label {
@@ -228,14 +230,13 @@
 
         @media (max-width: 680px) {
             header, .tabs, .tab-content { padding-left: 18px; padding-right: 18px; }
-            .fondo-row { grid-template-columns: 1fr 130px; }
+            .fondo-row { grid-template-columns: 1fr 90px 130px; }
             .fondo-obj, .fondo-perc { display: none; }
         }
     </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <div id="loginScreen" style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--bg);">
     <div style="text-align:center;padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:20px;max-width:380px;width:90%;">
         <div style="width:52px;height:52px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px;">📈</div>
@@ -248,7 +249,6 @@
     </div>
 </div>
 
-<!-- APP -->
 <div id="appScreen" style="display:none;">
 
 <header>
@@ -270,7 +270,6 @@
     <div class="tab" onclick="showTab('varios', event)">Varios</div>
 </div>
 
-<!-- ========== DASHBOARD ========== -->
 <div id="tab-dashboard" class="tab-content active">
     <div class="cards">
         <div class="card">
@@ -336,7 +335,6 @@
     </div>
 </div>
 
-<!-- ========== CARTERA DCA ========== -->
 <div id="tab-cartera" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -367,12 +365,8 @@
             <div class="dist-bar" id="distBarActual"></div>
         </div>
         <div class="dist-bar-wrap">
-            <div class="dist-bar-label"><span>Objetivo</span><span>75% / 13% / 12%</span></div>
-            <div class="dist-bar">
-                <div class="dist-bar-fill fill-f1" style="width:75%"></div>
-                <div class="dist-bar-fill fill-f2" style="width:13%"></div>
-                <div class="dist-bar-fill fill-f3" style="width:12%"></div>
-            </div>
+            <div class="dist-bar-label"><span>Objetivo</span><span id="distLabelObj">75% / 13% / 12%</span></div>
+            <div class="dist-bar" id="distBarObjetivo"></div>
         </div>
         <div id="distAlert"></div>
     </div>
@@ -381,8 +375,8 @@
         <div class="section-title">Mis Fondos</div>
         <div class="fondo-row" style="padding-bottom:8px;">
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Fondo</div>
-            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Obj.</div>
-            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Act.</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Obj %</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Act %</div>
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Importe</div>
         </div>
         <div class="fondo-row">
@@ -390,7 +384,7 @@
                 <div class="fondo-nombre">iShares Developed World <span class="fondo-badge">RV</span></div>
                 <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06%</div>
             </div>
-            <div class="fondo-obj">75%</div>
+            <div class="input-wrap small perc-input"><input type="number" id="obj1" value="75" oninput="guardarObjetivo('obj1');calcular();"></div>
             <div class="fondo-perc" id="perc1">0%</div>
             <div class="input-wrap"><input type="number" id="fund1" value="0" step="100" oninput="guardarFondo('fund1');calcular();"></div>
         </div>
@@ -399,7 +393,7 @@
                 <div class="fondo-nombre">iShares Emerging Markets <span class="fondo-badge">RV</span></div>
                 <div class="fondo-isin">IE00BYWYCC39 · TER 0.20%</div>
             </div>
-            <div class="fondo-obj">13%</div>
+            <div class="input-wrap small perc-input"><input type="number" id="obj2" value="13" oninput="guardarObjetivo('obj2');calcular();"></div>
             <div class="fondo-perc" id="perc2">0%</div>
             <div class="input-wrap"><input type="number" id="fund2" value="0" step="100" oninput="guardarFondo('fund2');calcular();"></div>
         </div>
@@ -408,10 +402,11 @@
                 <div class="fondo-nombre">Vanguard Global Small-Cap <span class="fondo-badge">RV</span></div>
                 <div class="fondo-isin">IE00B42W4L06 · TER 0.29%</div>
             </div>
-            <div class="fondo-obj">12%</div>
+            <div class="input-wrap small perc-input"><input type="number" id="obj3" value="12" oninput="guardarObjetivo('obj3');calcular();"></div>
             <div class="fondo-perc" id="perc3">0%</div>
             <div class="input-wrap"><input type="number" id="fund3" value="0" step="100" oninput="guardarFondo('fund3');calcular();"></div>
         </div>
+        <div id="objTotalAlert"></div>
     </div>
 
     <div class="section">
@@ -428,7 +423,6 @@
     </div>
 </div>
 
-<!-- ========== DEPÓSITOS ========== -->
 <div id="tab-depositos" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -480,7 +474,6 @@
     </div>
 </div>
 
-<!-- MODAL RENOVAR DEPÓSITO -->
 <div id="modalRenovar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:480px;width:90%;position:relative;">
         <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;font-weight:500;">Renovar Depósito</div>
@@ -499,7 +492,6 @@
     </div>
 </div>
 
-<!-- ========== VARIOS ========== -->
 <div id="tab-varios" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -599,6 +591,7 @@
                 snapshots = data.snapshots || JSON.parse(localStorage.getItem('snapshots') || '[]');
                 historialDCA = data.historialDCA || JSON.parse(localStorage.getItem('historialDCA') || '[]');
                 if (data.fondos) Object.entries(data.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (data.objetivos) Object.entries(data.objetivos).forEach(([k,v]) => localStorage.setItem(k, v));
             } else {
                 snapshots = JSON.parse(localStorage.getItem('snapshots') || '[]');
                 historialDCA = JSON.parse(localStorage.getItem('historialDCA') || '[]');
@@ -610,9 +603,12 @@
         if (!userId) return;
         const fondosData = {};
         fondos.forEach(f => { fondosData[f.id] = localStorage.getItem(f.id) || '0'; });
+        const objetivosData = {};
+        fondos.forEach((f, i) => { objetivosData['obj'+(i+1)] = localStorage.getItem('obj'+(i+1)) || f.objetivoDefault.toString(); });
+        
         try {
             await setDoc(doc(db, 'usuarios', userId), {
-                fondos: fondosData, depositos, varios,
+                fondos: fondosData, objetivos: objetivosData, depositos, varios,
                 snapshots, historialDCA,
                 updatedAt: new Date().toISOString()
             });
@@ -625,9 +621,9 @@
     }
 
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World', objetivo: 75 },
-        { id: 'fund2', nombre: 'iShares Emerging Markets', objetivo: 13 },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12 },
+        { id: 'fund1', nombre: 'iShares Developed World', objetivoDefault: 75 },
+        { id: 'fund2', nombre: 'iShares Emerging Markets', objetivoDefault: 13 },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivoDefault: 12 },
     ];
 
     let depositos = [];
@@ -653,9 +649,17 @@
         guardarConDebounce();
     };
 
+    window.guardarObjetivo = (id) => {
+        localStorage.setItem(id, document.getElementById(id).value);
+        guardarConDebounce();
+    };
+
     function calcular() {
         let total = 0;
         const vals = fondos.map(f => { const v = parseFloat(document.getElementById(f.id).value) || 0; total += v; return v; });
+        
+        const objs = fondos.map((f, i) => parseFloat(document.getElementById('obj'+(i+1)).value) || 0);
+        const totalObj = objs.reduce((a, b) => a + b, 0);
 
         fondos.forEach((f, i) => {
             const p = total > 0 ? (vals[i]/total*100).toFixed(1) : '0.0';
@@ -680,13 +684,27 @@
             <div class="dist-bar-fill fill-f2" style="width:${p2}%"></div>
             <div class="dist-bar-fill fill-f3" style="width:${p3}%"></div>`;
 
-        const maxDesv = Math.max(Math.abs(p1-75), Math.abs(p2-13), Math.abs(p3-12));
+        // Barra objetivo dinámica
+        document.getElementById('distLabelObj').textContent = `${objs[0].toFixed(1)}% / ${objs[1].toFixed(1)}% / ${objs[2].toFixed(1)}%`;
+        document.getElementById('distBarObjetivo').innerHTML = `
+            <div class="dist-bar-fill fill-f1" style="width:${totalObj > 0 ? (objs[0]/totalObj*100) : 0}%"></div>
+            <div class="dist-bar-fill fill-f2" style="width:${totalObj > 0 ? (objs[1]/totalObj*100) : 0}%"></div>
+            <div class="dist-bar-fill fill-f3" style="width:${totalObj > 0 ? (objs[2]/totalObj*100) : 0}%"></div>`;
+
+        const maxDesv = Math.max(Math.abs(p1-objs[0]), Math.abs(p2-objs[1]), Math.abs(p3-objs[2]));
         const alertEl = document.getElementById('distAlert');
-        if (total === 0) { alertEl.innerHTML = ''; return; }
-        if (maxDesv > 5) {
+        if (total === 0) { alertEl.innerHTML = ''; }
+        else if (maxDesv > 5) {
             alertEl.innerHTML = `<div class="alert alert-warn">⚠ Desviación de ${maxDesv.toFixed(1)}pp sobre el objetivo. Corrige en el próximo DCA.</div>`;
         } else {
             alertEl.innerHTML = `<div class="alert alert-ok">✓ Distribución dentro del rango objetivo</div>`;
+        }
+
+        const objAlertEl = document.getElementById('objTotalAlert');
+        if (Math.abs(totalObj - 100) > 0.01) {
+            objAlertEl.innerHTML = `<div class="alert alert-danger">⚠ La suma de objetivos es ${totalObj.toFixed(1)}%. Debería ser 100%.</div>`;
+        } else {
+            objAlertEl.innerHTML = '';
         }
     }
 
@@ -701,13 +719,18 @@
     window.calcularDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
+        
+        const objs = fondos.map((f, i) => parseFloat(document.getElementById('obj'+(i+1)).value) || 0);
+        const totalObj = objs.reduce((a, b) => a + b, 0);
+        if (Math.abs(totalObj - 100) > 0.1) { alert('La suma de objetivos debe ser 100% para calcular el DCA correctamente'); return; }
+
         let total = 0;
         fondos.forEach(f => total += parseFloat(document.getElementById(f.id).value) || 0);
         const totalFut = total + dca;
 
         let html = '<div class="dca-result">';
-        fondos.forEach(f => {
-            const imp = dca * f.objetivo / 100;
+        fondos.forEach((f, i) => {
+            const imp = dca * objs[i] / 100;
             const actual = parseFloat(document.getElementById(f.id).value) || 0;
             const nuevo = actual + imp;
             const pFut = totalFut > 0 ? (nuevo/totalFut*100).toFixed(1) : 0;
@@ -739,9 +762,12 @@
     window.aplicarDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
+        const objs = fondos.map((f, i) => parseFloat(document.getElementById('obj'+(i+1)).value) || 0);
+        if (Math.abs(objs.reduce((a,b)=>a+b,0) - 100) > 0.1) { alert('Corrige los objetivos para que sumen 100% antes de aplicar'); return; }
+
         if (!confirm('¿Aplicar este DCA y actualizar los importes?')) return;
-        fondos.forEach(f => {
-            const nuevo = (parseFloat(document.getElementById(f.id).value) || 0) + (dca * f.objetivo / 100);
+        fondos.forEach((f, i) => {
+            const nuevo = (parseFloat(document.getElementById(f.id).value) || 0) + (dca * objs[i] / 100);
             document.getElementById(f.id).value = nuevo.toFixed(2);
             localStorage.setItem(f.id, nuevo.toFixed(2));
         });
@@ -944,11 +970,10 @@
         const hoy = new Date().toISOString().split('T')[0];
         const idx = snapshots.findIndex(s => s.fecha === hoy);
         if (idx >= 0) {
-            snapshots[idx].valor = patrimonio; // actualiza el de hoy
+            snapshots[idx].valor = patrimonio;
         } else {
             snapshots.push({ fecha: hoy, valor: patrimonio });
         }
-        // Guardar en Firestore (incluido en guardarFirestore general)
         localStorage.setItem('snapshots', JSON.stringify(snapshots));
         guardarConDebounce();
     }
@@ -979,7 +1004,6 @@
         const xOf = i => pad.left + (i / (sorted.length - 1)) * (W - pad.left - pad.right);
         const yOf = v => pad.top + (1 - (v - minV) / (maxV - minV)) * (H - pad.top - pad.bottom);
 
-        // Área rellena
         ctx.beginPath();
         ctx.moveTo(xOf(0), yOf(vals[0]));
         sorted.forEach((s, i) => ctx.lineTo(xOf(i), yOf(s.valor)));
@@ -992,7 +1016,6 @@
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // Línea
         ctx.beginPath();
         ctx.moveTo(xOf(0), yOf(vals[0]));
         sorted.forEach((s, i) => ctx.lineTo(xOf(i), yOf(s.valor)));
@@ -1000,7 +1023,6 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Puntos y etiquetas fecha
         ctx.fillStyle = '#4ade80';
         sorted.forEach((s, i) => {
             ctx.beginPath();
@@ -1008,7 +1030,6 @@
             ctx.fill();
         });
 
-        // Fechas eje X (primera y última)
         ctx.fillStyle = '#6b7a99';
         ctx.font = '10px DM Mono';
         ctx.textAlign = 'left';
@@ -1016,7 +1037,6 @@
         ctx.textAlign = 'right';
         ctx.fillText(sorted[sorted.length - 1].fecha, W - pad.right, H - 6);
 
-        // Valor actual arriba derecha
         ctx.fillStyle = '#4ade80';
         ctx.font = 'bold 12px DM Mono';
         ctx.textAlign = 'right';
@@ -1052,7 +1072,6 @@
                     <div style="font-size:0.84em;color:var(--muted);">${h.fecha} <span style="font-size:0.85em">${h.hora}</span></div>
                     <div style="font-family:var(--mono);font-size:0.92em;color:var(--accent);">+${fmtN(h.importe)}</div>
                 </div>`).join('')}
-            ${historialDCA.length > 10 ? `<div style="font-size:0.78em;color:var(--muted);margin-top:10px;text-align:center;">Mostrando los últimos 10 de ${historialDCA.length} DCAs</div>` : ''}
         `;
     }
 
@@ -1065,47 +1084,41 @@
         const colors = ['#4ade80', '#60a5fa', '#f59e0b'];
         const labels = ['Fondos', 'Depósitos', 'Varios'];
         const vals = [cartera, deps, variosTotal || 0];
-        // Para el donut solo usamos valores positivos
-        const valsPositivos = vals.map(v => Math.max(0, v));
-        const totalPositivo = valsPositivos.reduce((s, v) => s + v, 0);
+        const totalPositivo = vals.reduce((s, v) => s + Math.max(0, v), 0);
 
         if (totalPositivo === 0) {
             ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
             ctx.fillStyle = '#2a3045'; ctx.fill();
-            ctx.beginPath(); ctx.arc(cx, cy, rInner, 0, Math.PI*2);
-            ctx.fillStyle = '#181c27'; ctx.fill();
-            ctx.fillStyle = '#6b7a99'; ctx.font = '12px DM Sans';
-            ctx.textAlign = 'center'; ctx.fillText('Sin datos', cx, cy+4);
         } else {
             let angle = -Math.PI / 2;
-            valsPositivos.forEach((v, i) => {
-                if (v === 0) return;
-                const slice = (v / totalPositivo) * Math.PI * 2;
+            vals.forEach((v, i) => {
+                const val = Math.max(0, v);
+                if (val === 0) return;
+                const slice = (val / totalPositivo) * Math.PI * 2;
                 ctx.beginPath(); ctx.moveTo(cx, cy);
                 ctx.arc(cx, cy, r, angle, angle + slice);
                 ctx.closePath(); ctx.fillStyle = colors[i]; ctx.fill();
                 angle += slice;
             });
-            ctx.beginPath(); ctx.arc(cx, cy, rInner, 0, Math.PI*2);
-            ctx.fillStyle = '#181c27'; ctx.fill();
-            ctx.fillStyle = '#e8ecf4'; ctx.font = 'bold 14px DM Mono';
-            ctx.textAlign = 'center'; ctx.fillText(fmtShort(patrimonio), cx, cy-3);
-            ctx.fillStyle = '#6b7a99'; ctx.font = '11px DM Sans';
-            ctx.fillText('total', cx, cy+13);
         }
+        ctx.beginPath(); ctx.arc(cx, cy, rInner, 0, Math.PI*2);
+        ctx.fillStyle = '#181c27'; ctx.fill();
+        ctx.fillStyle = '#e8ecf4'; ctx.font = 'bold 14px DM Mono';
+        ctx.textAlign = 'center'; ctx.fillText(fmtShort(patrimonio), cx, cy-3);
+        ctx.fillStyle = '#6b7a99'; ctx.font = '11px DM Sans';
+        ctx.fillText('total', cx, cy+13);
 
         document.getElementById('pieLegend').innerHTML = vals.map((v, i) => v !== 0 ? `
             <div class="legend-item">
-                <div class="legend-dot" style="background:${v < 0 ? 'var(--danger)' : colors[i]}"></div>
-                <div class="legend-name">${labels[i]}${v < 0 ? ' <span style="font-size:0.8em;color:var(--danger)">(deuda)</span>' : ''}</div>
-                <div class="legend-val" style="color:${v < 0 ? 'var(--danger)' : 'inherit'}">${fmtN(v)}</div>
+                <div class="legend-dot" style="background:${colors[i]}"></div>
+                <div class="legend-name">${labels[i]}</div>
+                <div class="legend-val">${fmtN(v)}</div>
                 <div class="legend-perc">${patrimonio !== 0 ? (v/patrimonio*100).toFixed(1)+'%' : '0%'}</div>
             </div>` : '').join('');
     }
 
     // RENOVAR DEPÓSITO
     let renovarId = null;
-
     window.abrirRenovar = (id) => {
         const d = depositos.find(d => d.id === id);
         if (!d) return;
@@ -1120,24 +1133,16 @@
         document.getElementById('renFecha').value = nuevaFecha.toISOString().split('T')[0];
         document.getElementById('modalRenovar').style.display = 'flex';
     };
-
-    window.cerrarModal = () => {
-        document.getElementById('modalRenovar').style.display = 'none';
-        renovarId = null;
-    };
-
+    window.cerrarModal = () => { document.getElementById('modalRenovar').style.display = 'none'; };
     window.confirmarRenovar = () => {
         const d = depositos.find(d => d.id === renovarId);
         if (!d) return;
-        d.cantidad = parseFloat(document.getElementById('renCantidad').value) || d.cantidad;
-        d.tae = parseFloat(document.getElementById('renTAE').value) || d.tae;
-        d.duracion = parseInt(document.getElementById('renDuracion').value) || d.duracion;
-        d.fecha = document.getElementById('renFecha').value || d.fecha;
+        d.cantidad = parseFloat(document.getElementById('renCantidad').value);
+        d.tae = parseFloat(document.getElementById('renTAE').value);
+        d.duracion = parseInt(document.getElementById('renDuracion').value);
+        d.fecha = document.getElementById('renFecha').value;
         d.notas = document.getElementById('renNotas').value;
-        guardarFirestore();
-        cerrarModal();
-        renderDepositos();
-        renderDashboard();
+        guardarFirestore(); cerrarModal(); renderDepositos(); renderDashboard();
     };
 
     // VARIOS
@@ -1147,23 +1152,9 @@
     window.updateVarioImporte = (id, valor) => {
         const v = varios.find(v => v.id === id);
         if (!v) return;
-        const anteriorNegativo = v.importe < 0;
         v.importe = parseFloat(valor) || 0;
-        const ahoraNegativo = v.importe < 0;
-        guardarConDebounce();
-        if (anteriorNegativo !== ahoraNegativo) {
-            renderVarios();
-        } else {
-            const totalV = varios.reduce((s, v) => s + v.importe, 0);
-            const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
-            document.getElementById('totalVarios').textContent = fmtN(totalV);
-            document.getElementById('totalAparcado').textContent = fmtN(totalAparcado);
-            document.getElementById('variosAlertas').innerHTML = totalAparcado > 0
-                ? `<div class="alert alert-warn">⚡ Tienes ${fmtN(totalAparcado)} aparcados sin invertir. ¿Es el momento de hacer un DCA?</div>` : '';
-        }
-        renderDashboard();
+        guardarConDebounce(); renderDashboard();
     };
-
     window.addVario = () => {
         const v = {
             id: Date.now(),
@@ -1172,69 +1163,39 @@
             importe: parseFloat(document.getElementById('varImporte').value),
             notas: document.getElementById('varNotas').value.trim()
         };
-        if (!v.nombre || !v.importe) { alert('Completa nombre e importe'); return; }
-        varios.push(v);
-        guardarFirestore();
+        if (!v.nombre || isNaN(v.importe)) { alert('Completa nombre e importe'); return; }
+        varios.push(v); guardarFirestore(); renderVarios(); renderDashboard();
         ['varNombre','varImporte','varNotas'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('varCategoria').value = 'cripto';
-        renderVarios();
-        renderDashboard();
     };
-
     window.deleteVario = (id) => {
         if (!confirm('¿Eliminar este activo?')) return;
-        varios = varios.filter(v => v.id !== id);
-        guardarFirestore();
-        renderVarios();
-        renderDashboard();
+        varios = varios.filter(v => v.id !== id); guardarFirestore(); renderVarios(); renderDashboard();
     };
-
     function renderVarios() {
         const totalV = varios.reduce((s, v) => s + v.importe, 0);
         const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
         document.getElementById('totalVarios').textContent = fmtN(totalV);
         document.getElementById('numVarios').textContent = varios.length;
         document.getElementById('totalAparcado').textContent = fmtN(totalAparcado);
-
-        let alertas = '';
-        if (totalAparcado > 0) {
-            alertas = `<div class="alert alert-warn">⚡ Tienes ${fmtN(totalAparcado)} aparcados sin invertir. ¿Es el momento de hacer un DCA?</div>`;
-        }
-        document.getElementById('variosAlertas').innerHTML = alertas;
-
-        const container = document.getElementById('variosContainer');
-        if (varios.length === 0) {
-            container.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Sin activos registrados.</p>';
-            return;
-        }
-
-        container.innerHTML = varios.map(v => {
-            const color = categoriaColors[v.categoria] || '#a78bfa';
-            const label = categoriaLabels[v.categoria] || v.categoria;
-            const esDeuda = v.importe < 0;
-            return `
-                <div style="display:grid;grid-template-columns:1fr 150px auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);">
-                    <div>
-                        <div style="font-weight:500;font-size:0.92em;">${v.nombre}
-                            <span style="font-size:0.68em;font-weight:600;padding:2px 8px;border-radius:20px;background:${color}22;color:${color};border:1px solid ${color}44;margin-left:6px;">${label}</span>
-                            ${esDeuda ? '<span style="font-size:0.68em;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(248,113,113,0.1);color:var(--danger);border:1px solid rgba(248,113,113,0.3);margin-left:4px;">deuda</span>' : ''}
-                        </div>
-                        ${v.notas ? `<div style="font-size:0.76em;color:var(--muted);margin-top:3px;">${v.notas}</div>` : ''}
+        document.getElementById('variosContainer').innerHTML = varios.map(v => `
+            <div style="display:grid;grid-template-columns:1fr 150px auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);">
+                <div>
+                    <div style="font-weight:500;font-size:0.92em;">${v.nombre}
+                        <span style="font-size:0.68em;font-weight:600;padding:2px 8px;border-radius:20px;background:${categoriaColors[v.categoria]}22;color:${categoriaColors[v.categoria]};border:1px solid ${categoriaColors[v.categoria]}44;margin-left:6px;">${categoriaLabels[v.categoria]}</span>
                     </div>
-                    <div class="input-wrap">
-                        <input type="number" value="${v.importe}" step="100"
-                            oninput="updateVarioImporte(${v.id}, this.value)"
-                            style="width:100%;${esDeuda ? 'color:var(--danger);border-color:rgba(248,113,113,0.4);' : ''}">
-                    </div>
-                    <button class="btn btn-del" onclick="deleteVario(${v.id})">✕</button>
-                </div>`;
-        }).join('');
+                </div>
+                <div class="input-wrap"><input type="number" value="${v.importe}" oninput="updateVarioImporte(${v.id}, this.value)"></div>
+                <button class="btn btn-del" onclick="deleteVario(${v.id})">✕</button>
+            </div>`).join('');
     }
 
     // EXPORT/IMPORT
     window.exportarDatos = () => {
-        const datos = { fondos: {}, depositos, varios };
-        fondos.forEach(f => datos.fondos[f.id] = localStorage.getItem(f.id));
+        const datos = { fondos: {}, objetivos: {}, depositos, varios };
+        fondos.forEach((f, i) => {
+            datos.fondos[f.id] = localStorage.getItem(f.id);
+            datos.objetivos['obj'+(i+1)] = localStorage.getItem('obj'+(i+1));
+        });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }));
         a.download = `backup-dca-${new Date().toISOString().split('T')[0]}.json`;
@@ -1247,8 +1208,8 @@
         reader.onload = ev => {
             try {
                 const datos = JSON.parse(ev.target.result);
-                if (!confirm('¿Importar y sobrescribir los datos actuales?')) return;
                 if (datos.fondos) Object.entries(datos.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (datos.objetivos) Object.entries(datos.objetivos).forEach(([k,v]) => localStorage.setItem(k, v));
                 if (datos.depositos) depositos = datos.depositos;
                 if (datos.varios) varios = datos.varios;
                 guardarFirestore().then(() => location.reload());
@@ -1257,27 +1218,17 @@
         reader.readAsText(file);
     };
 
-    // UTILS
-    function fmtN(n) {
-        const val = (n === null || n === undefined) ? 0 : n;
-        return val.toLocaleString('es-ES', {maximumFractionDigits:0}) + '€';
-    }
-    function fmtShort(n) {
-        if (n >= 1000000) return (n/1000000).toFixed(1)+'M€';
-        if (n >= 1000) return Math.round(n/1000)+'k€';
-        return fmtN(n);
-    }
+    function fmtN(n) { return (n || 0).toLocaleString('es-ES', {maximumFractionDigits:0}) + '€'; }
+    function fmtShort(n) { return n >= 1000 ? Math.round(n/1000)+'k€' : fmtN(n); }
 
-    // INIT (llamado tras login)
     function inicializarApp() {
-        fondos.forEach(f => { const v = localStorage.getItem(f.id); if (v) document.getElementById(f.id).value = v; });
-        calcular();
-        renderDepositos();
-        renderVarios();
-        renderDashboard();
+        fondos.forEach((f, i) => { 
+            const v = localStorage.getItem(f.id); if (v) document.getElementById(f.id).value = v;
+            const o = localStorage.getItem('obj'+(i+1)); if (o) document.getElementById('obj'+(i+1)).value = o;
+        });
+        calcular(); renderDepositos(); renderVarios(); renderDashboard();
     }
 </script>
-</div><!-- /appScreen -->
-
+</div>
 </body>
 </html>
