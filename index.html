@@ -715,60 +715,49 @@
             document.getElementById('dcaResult').innerHTML = `<div class="alert alert-info" style="margin-top:14px">💡 Importe prellenado con tu saldo aparcado (${fmtN(totalAparcado)}). Revisa y ajusta si quieres.</div>`;
         }
     }
-    
-window.calcularDCA = () => {
-    const dca = parseFloat(document.getElementById('dcaAmount').value);
-    if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
-    
-    let totalActual = 0;
-    const valoresActuales = fondos.map(f => {
-        const v = parseFloat(document.getElementById(f.id).value) || 0;
-        totalActual += v;
-        return v;
-    });
 
-    const totalFuturo = totalActual + dca;
-    let html = '<div class="dca-result">';
-
-    fondos.forEach((f, i) => {
-        // ¿Cuánto debería tener este fondo sobre el TOTAL futuro?
-        const cantidadIdealSegunObjetivo = totalFuturo * (f.objetivo / 100);
+    window.calcularDCA = () => {
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
         
-        // La aportación es lo ideal menos lo que ya tengo
-        let aportacionSugerida = cantidadIdealSegunObjetivo - valoresActuales[i];
-        
-        // Si la aportación es negativa (porque ya te pasas del objetivo), 
-        // en un DCA normal se suele dejar en 0 (no vendes, solo no compras más de eso)
-        if (aportacionSugerida < 0) aportacionSugerida = 0;
+        const objs = fondos.map((f, i) => parseFloat(document.getElementById('obj'+(i+1)).value) || 0);
+        const totalObj = objs.reduce((a, b) => a + b, 0);
+        if (Math.abs(totalObj - 100) > 0.1) { alert('La suma de objetivos debe ser 100% para calcular el DCA correctamente'); return; }
 
-        const nuevoTotalFondo = valoresActuales[i] + aportacionSugerida;
-        const pFut = totalFuturo > 0 ? (nuevoTotalFondo / totalFuturo * 100).toFixed(1) : 0;
+        let total = 0;
+        fondos.forEach(f => total += parseFloat(document.getElementById(f.id).value) || 0);
+        const totalFut = total + dca;
 
+        let html = '<div class="dca-result">';
+        fondos.forEach((f, i) => {
+            const imp = dca * objs[i] / 100;
+            const actual = parseFloat(document.getElementById(f.id).value) || 0;
+            const nuevo = actual + imp;
+            const pFut = totalFut > 0 ? (nuevo/totalFut*100).toFixed(1) : 0;
+            html += `
+                <div class="dca-fund-row">
+                    <div>
+                        <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
+                        <div class="dca-nuevo">→ Nuevo total: ${fmtN(nuevo)} <span style="color:var(--accent2)">(${pFut}%)</span></div>
+                    </div>
+                    <div class="dca-amount">+${fmtN(imp)}</div>
+                </div>`;
+        });
         html += `
-            <div class="dca-fund-row">
-                <div>
-                    <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
-                    <div class="dca-nuevo">→ Nuevo total: ${fmtN(nuevoTotalFondo)} <span style="color:var(--accent2)">(${pFut}%)</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
+                <div style="font-size:0.82em;color:var(--muted);">
+                    Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(total)}</span>
+                    &nbsp;+&nbsp;
+                    aportación <span style="font-family:var(--mono);color:var(--accent);">${fmtN(dca)}</span>
                 </div>
-                <div class="dca-amount" style="color: ${aportacionSugerida > 0 ? 'var(--accent)' : 'var(--muted)'}">
-                    +${fmtN(aportacionSugerida)}
+                <div style="text-align:right;">
+                    <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">Total tras DCA</div>
+                    <div style="font-family:var(--mono);font-size:1.4em;font-weight:500;color:var(--accent);">${fmtN(totalFut)}</div>
                 </div>
             </div>`;
-    });
-
-    html += `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
-            <div style="font-size:0.82em;color:var(--muted);">
-                Ajustando para alcanzar el % objetivo
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">Total tras DCA</div>
-                <div style="font-family:var(--mono);font-size:1.4em;font-weight:500;color:var(--accent);">${fmtN(totalFuturo)}</div>
-            </div>
-        </div>`;
-    html += '</div>';
-    document.getElementById('dcaResult').innerHTML = html;
-}
+        html += '</div>';
+        document.getElementById('dcaResult').innerHTML = html;
+    }
 
     window.aplicarDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
