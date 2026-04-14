@@ -667,7 +667,7 @@
     // ======= PRECIOS JUSTETF =======
     async function fetchPrecioFondo(fondo) {
         // Intentamos primero con el proxy allorigins para evitar CORS
-        const url = `https://www.justetf.com/api/etfs/${fondo.isin}/quote?locale=en&currency=EUR&isin=${fondo.isin}`;
+        const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
         const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         try {
             const res = await fetch(proxy);
