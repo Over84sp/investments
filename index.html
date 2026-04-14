@@ -664,46 +664,51 @@
         { id: 'fund3', nombre: 'Vanguard Global Small-Cap',  objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
     ];
 
-// ======= PRECIOS FINANCIAL TIMES =======
+// ======= PRECIOS FINANCIAL TIMES (CORREGIDO) =======
 async function fetchPrecioFondo(fondo) {
-    // La URL de Financial Times para el ISIN
-    const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
-    // Usamos el proxy para evitar problemas de CORS
-    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    // Definimos los dos posibles tipos de URL que usa FT
+    const tipos = ['funds', 'etfs'];
     
-    try {
-        const res = await fetch(proxy);
-        if (!res.ok) throw new Error('Error en el proxy');
+    for (let tipo of tipos) {
+        const url = `https://markets.ft.com/data/${tipo}/tearsheet/summary?s=${fondo.isin}:EUR`;
+        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         
-        const outer = await res.json();
-        const htmlString = outer.contents; // Aquí está el HTML puro de la página
-        
-        // Creamos un parser para convertir el texto HTML en un objeto DOM manejable
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, 'text/html');
-        
-        // Buscamos el elemento usando la clase que usas en tu Excel
-        // FT suele poner el precio de cierre/NAV en el primer elemento con esta clase
-        const priceElement = doc.querySelector('.mod-ui-data-list__value');
-        
-        if (priceElement) {
-            let priceText = priceElement.innerText.trim();
+        try {
+            const res = await fetch(proxy);
+            if (!res.ok) continue;
+
+            const outer = await res.json();
+            const htmlString = outer.contents; // Es HTML, no JSON, por eso no hacíamos JSON.parse
             
-            // Limpieza del número: 
-            // 1. Quitamos espacios
-            // 2. Quitamos comas (separador de miles en FT)
-            // 3. Convertimos a número (el punto decimal ya es estándar en JS)
-            const cleanPrice = parseFloat(priceText.replace(/,/g, ''));
-            
-            if (!isNaN(cleanPrice)) {
-                fondo.precio = cleanPrice;
-                fondo.fechaPrecio = new Date().toISOString().split('T')[0]; // Guardamos fecha de hoy
-                return true;
+            if (!htmlString || htmlString.includes("No results found")) continue;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // FT usa la clase 'mod-ui-data-list__value' para varios datos. 
+            // El primero suele ser el precio (NAV o Close Price).
+            const priceElement = doc.querySelector('.mod-ui-data-list__value');
+
+            if (priceElement) {
+                let priceText = priceElement.innerText.trim();
+                
+                // Limpieza: eliminamos comas (separador de miles en FT) y cualquier símbolo no numérico
+                // Pero mantenemos el punto decimal.
+                const cleanPrice = parseFloat(priceText.replace(/,/g, ''));
+                
+                if (!isNaN(cleanPrice) && cleanPrice > 0) {
+                    fondo.precio = cleanPrice;
+                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                    console.log(`✅ ${fondo.isin} cargado como ${tipo}: ${cleanPrice}€`);
+                    return true; // Si lo encuentra, salimos de la función con éxito
+                }
             }
+        } catch (e) {
+            console.warn(`Error intentando categoría ${tipo} para ${fondo.isin}:`, e);
         }
-    } catch(e) {
-        console.warn(`No se pudo obtener precio para ${fondo.isin} desde FT:`, e);
     }
+    
+    console.error(`❌ No se pudo encontrar precio para ${fondo.isin} tras intentar en fondos y ETFs.`);
     return false;
 }
 
