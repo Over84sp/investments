@@ -664,26 +664,48 @@
         { id: 'fund3', nombre: 'Vanguard Global Small-Cap',  objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
     ];
 
-    // ======= PRECIOS JUSTETF =======
-    async function fetchPrecioFondo(fondo) {
-        // Intentamos primero con el proxy allorigins para evitar CORS
-        const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
-        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        try {
-            const res = await fetch(proxy);
-            if (!res.ok) throw new Error('proxy error');
-            const outer = await res.json();
-            const data = JSON.parse(outer.contents);
-            if (data && data.latestQuote && data.latestQuote.raw) {
-                fondo.precio = data.latestQuote.raw;
-                fondo.fechaPrecio = data.latestQuoteDate || null;
+// ======= PRECIOS FINANCIAL TIMES =======
+async function fetchPrecioFondo(fondo) {
+    // La URL de Financial Times para el ISIN
+    const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
+    // Usamos el proxy para evitar problemas de CORS
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    
+    try {
+        const res = await fetch(proxy);
+        if (!res.ok) throw new Error('Error en el proxy');
+        
+        const outer = await res.json();
+        const htmlString = outer.contents; // Aquí está el HTML puro de la página
+        
+        // Creamos un parser para convertir el texto HTML en un objeto DOM manejable
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        
+        // Buscamos el elemento usando la clase que usas en tu Excel
+        // FT suele poner el precio de cierre/NAV en el primer elemento con esta clase
+        const priceElement = doc.querySelector('.mod-ui-data-list__value');
+        
+        if (priceElement) {
+            let priceText = priceElement.innerText.trim();
+            
+            // Limpieza del número: 
+            // 1. Quitamos espacios
+            // 2. Quitamos comas (separador de miles en FT)
+            // 3. Convertimos a número (el punto decimal ya es estándar en JS)
+            const cleanPrice = parseFloat(priceText.replace(/,/g, ''));
+            
+            if (!isNaN(cleanPrice)) {
+                fondo.precio = cleanPrice;
+                fondo.fechaPrecio = new Date().toISOString().split('T')[0]; // Guardamos fecha de hoy
                 return true;
             }
-        } catch(e) {
-            console.warn(`No se pudo obtener precio para ${fondo.isin}:`, e);
         }
-        return false;
+    } catch(e) {
+        console.warn(`No se pudo obtener precio para ${fondo.isin} desde FT:`, e);
     }
+    return false;
+}
 
     async function cargarPrecios() {
         const statusEl = document.getElementById('preciosStatus');
