@@ -666,49 +666,71 @@
 
 // ======= PRECIOS FINANCIAL TIMES (CORREGIDO) =======
 async function fetchPrecioFondo(fondo) {
-    // Definimos los dos posibles tipos de URL que usa FT
-    const tipos = ['funds', 'etfs'];
-    
-    for (let tipo of tipos) {
-        const url = `https://markets.ft.com/data/${tipo}/tearsheet/summary?s=${fondo.isin}:EUR`;
-        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    // Usamos la versión /raw del proxy para recibir el HTML directamente sin envoltorios JSON
+    // Probamos primero con la ruta de 'funds' que es la que te funciona en Excel
+    const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+
+    try {
+        console.log(`Buscando precio para: ${fondo.nombre} (${fondo.isin})...`);
         
-        try {
-            const res = await fetch(proxy);
-            if (!res.ok) continue;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('Error de red');
+        
+        const html = await response.text();
+        
+        // Creamos el simulador de navegador
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
 
-            const outer = await res.json();
-            const htmlString = outer.contents; // Es HTML, no JSON, por eso no hacíamos JSON.parse
-            
-            if (!htmlString || htmlString.includes("No results found")) continue;
+        // Buscamos el valor. En FT el precio principal está en el primer span de esta clase
+        // Es exactamente lo que hace tu formula de Excel
+        const priceSpan = doc.querySelector(".mod-ui-data-list__value");
 
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
+        if (priceSpan) {
+            let rawValue = priceSpan.innerText.trim();
+            // Limpieza: quitamos comas (miles) y dejamos el punto decimal
+            // Ejemplo: "1,234.56" -> "1234.56"
+            let cleanValue = rawValue.replace(/,/g, '');
+            let precio = parseFloat(cleanValue);
 
-            // FT usa la clase 'mod-ui-data-list__value' para varios datos. 
-            // El primero suele ser el precio (NAV o Close Price).
-            const priceElement = doc.querySelector('.mod-ui-data-list__value');
-
-            if (priceElement) {
-                let priceText = priceElement.innerText.trim();
-                
-                // Limpieza: eliminamos comas (separador de miles en FT) y cualquier símbolo no numérico
-                // Pero mantenemos el punto decimal.
-                const cleanPrice = parseFloat(priceText.replace(/,/g, ''));
-                
-                if (!isNaN(cleanPrice) && cleanPrice > 0) {
-                    fondo.precio = cleanPrice;
-                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                    console.log(`✅ ${fondo.isin} cargado como ${tipo}: ${cleanPrice}€`);
-                    return true; // Si lo encuentra, salimos de la función con éxito
-                }
+            if (!isNaN(precio) && precio > 0) {
+                fondo.precio = precio;
+                fondo.fechaPrecio = new Date().toLocaleDateString();
+                console.log(`✅ ¡Logrado! ${fondo.nombre}: ${precio}`);
+                return true;
             }
-        } catch (e) {
-            console.warn(`Error intentando categoría ${tipo} para ${fondo.isin}:`, e);
         }
+        
+        // Si llegamos aquí es que en 'funds' no estaba, probamos en 'etfs'
+        if (html.includes("Symbol not found") || !priceSpan) {
+            return await fetchPrecioFondoAlternativo(fondo);
+        }
+
+    } catch (error) {
+        console.error(`Error con ${fondo.isin}:`, error);
     }
-    
-    console.error(`❌ No se pudo encontrar precio para ${fondo.isin} tras intentar en fondos y ETFs.`);
+    return false;
+}
+
+// Función auxiliar por si el activo es un ETF y no un Fondo
+async function fetchPrecioFondoAlternativo(fondo) {
+    const url = `https://markets.ft.com/data/etfs/tearsheet/summary?s=${fondo.isin}:EUR`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    try {
+        const response = await fetch(proxyUrl);
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const priceSpan = doc.querySelector(".mod-ui-data-list__value");
+        if (priceSpan) {
+            let precio = parseFloat(priceSpan.innerText.trim().replace(/,/g, ''));
+            if (!isNaN(precio)) {
+                fondo.precio = precio;
+                fondo.fechaPrecio = new Date().toLocaleDateString();
+                return true;
+            }
+        }
+    } catch (e) { return false; }
     return false;
 }
 
