@@ -36,9 +36,7 @@
         header h1 { font-size: 1.05em; font-weight: 600; letter-spacing: -0.02em; }
         header span { font-size: 0.78em; color: var(--muted); font-weight: 300; display: block; margin-top: 1px; }
 
-        .tabs {
-            display: flex; border-bottom: 1px solid var(--border); padding: 0 40px;
-        }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 40px; }
         .tab {
             padding: 13px 18px; cursor: pointer; font-size: 0.84em; font-weight: 500;
             color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.2s;
@@ -270,7 +268,7 @@
     <div class="tab" onclick="showTab('varios', event)">Varios</div>
 </div>
 
-<!-- ========== DASHBOARD ========== -->
+<!-- DASHBOARD -->
 <div id="tab-dashboard" class="tab-content active">
     <div class="cards">
         <div class="card">
@@ -311,7 +309,7 @@
 
     <div class="section">
         <div class="section-title">Evolución del Patrimonio</div>
-        <p style="font-size:0.78em;color:var(--muted);margin-bottom:16px;">Snapshot automático cada vez que abres la app. Se acumula con el tiempo.</p>
+        <p style="font-size:0.78em;color:var(--muted);margin-bottom:16px;">Snapshot automático cada vez que abres la app.</p>
         <canvas id="evolucionChart" style="width:100%;height:200px;"></canvas>
         <div id="evolucionEmpty" style="text-align:center;padding:40px 0;color:var(--muted);font-size:0.86em;">Aún no hay suficientes datos. Vuelve mañana 👋</div>
     </div>
@@ -336,7 +334,7 @@
     </div>
 </div>
 
-<!-- ========== CARTERA DCA ========== -->
+<!-- CARTERA DCA -->
 <div id="tab-cartera" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -381,7 +379,7 @@
     <div class="section">
         <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
             <span>Mis Fondos</span>
-            <button class="btn btn-ghost" onclick="cargarPrecios()" style="padding:5px 12px;font-size:0.76em;">↻ Actualizar precios</button>
+            <button class="btn btn-ghost" onclick="window.cargarPrecios()" style="padding:5px 12px;font-size:0.76em;">↻ Actualizar precios</button>
         </div>
         <div class="fondo-row" style="padding-bottom:8px;">
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Fondo</div>
@@ -392,23 +390,26 @@
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">iShares Developed World <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06% · <span id="precioLabel0" style="color:var(--accent)">cargando…</span></div>
+                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06% · <span id="precioLabel0" style="color:var(--accent)">cargando…</span>
+                    <button onclick="window.recargarPrecioFondo(0)" title="Recargar precio" style="margin-left:6px;padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
+                </div>
             </div>
             <div class="fondo-obj">
                 <input type="number" id="objInput0" value="75" min="0" max="100" step="1" oninput="guardarObjetivo(0,this.value)"
                     style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
             </div>
             <div class="fondo-perc" id="perc1">0%</div>
-            <div class="input-wrap" style="--unit:'part'">
-                <input type="number" id="fund1" value="0" step="0.001" min="0" oninput="guardarFondo('fund1');calcular();"
-                    style="padding-right:44px;">
+            <div class="input-wrap">
+                <input type="number" id="fund1" value="0" step="0.001" min="0" oninput="guardarFondo('fund1');calcular();" style="padding-right:44px;">
                 <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.72em;pointer-events:none;">part.</span>
             </div>
         </div>
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">iShares Emerging Markets <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20% · <span id="precioLabel1" style="color:var(--accent)">cargando…</span></div>
+                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20% · <span id="precioLabel1" style="color:var(--accent)">cargando…</span>
+                    <button onclick="window.recargarPrecioFondo(1)" title="Recargar precio" style="margin-left:6px;padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
+                </div>
             </div>
             <div class="fondo-obj">
                 <input type="number" id="objInput1" value="13" min="0" max="100" step="1" oninput="guardarObjetivo(1,this.value)"
@@ -416,15 +417,16 @@
             </div>
             <div class="fondo-perc" id="perc2">0%</div>
             <div class="input-wrap">
-                <input type="number" id="fund2" value="0" step="0.001" min="0" oninput="guardarFondo('fund2');calcular();"
-                    style="padding-right:44px;">
+                <input type="number" id="fund2" value="0" step="0.001" min="0" oninput="guardarFondo('fund2');calcular();" style="padding-right:44px;">
                 <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.72em;pointer-events:none;">part.</span>
             </div>
         </div>
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">Vanguard Global Small-Cap <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE00B42W4L06 · TER 0.29% · <span id="precioLabel2" style="color:var(--accent)">cargando…</span></div>
+                <div class="fondo-isin">IE00B42W4L06 · TER 0.29% · <span id="precioLabel2" style="color:var(--accent)">cargando…</span>
+                    <button onclick="window.recargarPrecioFondo(2)" title="Recargar precio" style="margin-left:6px;padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
+                </div>
             </div>
             <div class="fondo-obj">
                 <input type="number" id="objInput2" value="12" min="0" max="100" step="1" oninput="guardarObjetivo(2,this.value)"
@@ -432,8 +434,7 @@
             </div>
             <div class="fondo-perc" id="perc3">0%</div>
             <div class="input-wrap">
-                <input type="number" id="fund3" value="0" step="0.001" min="0" oninput="guardarFondo('fund3');calcular();"
-                    style="padding-right:44px;">
+                <input type="number" id="fund3" value="0" step="0.001" min="0" oninput="guardarFondo('fund3');calcular();" style="padding-right:44px;">
                 <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.72em;pointer-events:none;">part.</span>
             </div>
         </div>
@@ -454,7 +455,7 @@
     </div>
 </div>
 
-<!-- ========== DEPÓSITOS ========== -->
+<!-- DEPÓSITOS -->
 <div id="tab-depositos" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -506,7 +507,7 @@
     </div>
 </div>
 
-<!-- MODAL RENOVAR DEPÓSITO -->
+<!-- MODAL RENOVAR -->
 <div id="modalRenovar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:480px;width:90%;position:relative;">
         <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;font-weight:500;">Renovar Depósito</div>
@@ -525,7 +526,7 @@
     </div>
 </div>
 
-<!-- ========== VARIOS ========== -->
+<!-- VARIOS -->
 <div id="tab-varios" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -658,55 +659,75 @@
     }
 
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World',    objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null },
-        { id: 'fund2', nombre: 'iShares Emerging Markets',   objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap',  objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
+        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null },
+        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
     ];
 
     // ======= PRECIOS FINANCIAL TIMES =======
     async function fetchPrecioFondo(fondo) {
+        const proxies = [
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        ];
+
         const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
-        const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        
-        try {
-            const res = await fetch(proxy);
-            if (!res.ok) throw new Error('proxy error');
-            const html = await res.text();
-            
-            // Parsear HTML para extraer precio
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Buscar el precio en el elemento con clase mod-ui-data-list__value
-            const priceElements = doc.querySelectorAll('.mod-ui-data-list__value');
-            
-            if (priceElements && priceElements.length > 0) {
-                // El primer elemento suele ser el precio actual
-                let precioTexto = priceElements[0].textContent.trim();
-                // Limpiar el texto: quitar puntos (separadores de miles) y convertir coma en punto
-                precioTexto = precioTexto.replace(/\./g, '').replace(',', '.');
-                const precio = parseFloat(precioTexto);
-                
-                if (!isNaN(precio) && precio > 0) {
-                    fondo.precio = precio;
-                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                    return true;
+
+        for (let i = 0; i < proxies.length; i++) {
+            try {
+                console.log(`[${fondo.isin}] Intentando proxy ${i + 1}...`);
+                const res = await fetch(proxies[i](url));
+                if (!res.ok) {
+                    console.warn(`[${fondo.isin}] Proxy ${i + 1} status: ${res.status}`);
+                    continue;
                 }
+
+                const html = await res.text();
+                const parser = new DOMParser();
+                const docParsed = parser.parseFromString(html, 'text/html');
+                const priceElements = docParsed.querySelectorAll('.mod-ui-data-list__value');
+
+                if (priceElements && priceElements.length > 0) {
+                    let precioTexto = priceElements[0].textContent.trim();
+                    console.log(`[${fondo.isin}] Texto raw:`, precioTexto);
+
+                    // FT usa formato INGLÉS: 1,234.56
+                    // → quitar comas (separador de miles), el punto es decimal
+                    precioTexto = precioTexto.replace(/,/g, '');
+                    const precio = parseFloat(precioTexto);
+                    console.log(`[${fondo.isin}] Precio parseado:`, precio);
+
+                    if (!isNaN(precio) && precio > 0) {
+                        fondo.precio = precio;
+                        fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                        console.log(`✅ [${fondo.isin}] OK: ${precio}€`);
+                        return true;
+                    }
+                }
+
+                console.warn(`[${fondo.isin}] No se encontró precio en el HTML`);
+
+            } catch(e) {
+                console.warn(`[${fondo.isin}] Error proxy ${i + 1}:`, e.message);
+                continue;
             }
-        } catch(e) {
-            console.warn(`No se pudo obtener precio para ${fondo.isin}:`, e);
         }
+
+        console.error(`❌ [${fondo.isin}] Sin precio con ningún proxy`);
         return false;
     }
 
     async function cargarPrecios() {
         const statusEl = document.getElementById('preciosStatus');
-        if (statusEl) statusEl.textContent = 'Actualizando precios…';
-        
+        if (statusEl) {
+            statusEl.textContent = 'Actualizando precios…';
+            statusEl.style.color = 'var(--muted)';
+        }
+
         const resultados = await Promise.all(fondos.map(fetchPrecioFondo));
         const ok = resultados.filter(Boolean).length;
-        
-        // Actualizar etiquetas de precio en la UI
+
         fondos.forEach((f, i) => {
             const labelCard = document.getElementById('precio' + ['F1','F2','F3'][i]);
             const labelRow  = document.getElementById('precioLabel' + i);
@@ -714,28 +735,54 @@
                 const txt = `${f.precio.toFixed(4)}€/part.`;
                 const fecha = f.fechaPrecio ? ` (${f.fechaPrecio})` : '';
                 if (labelCard) labelCard.textContent = txt;
-                if (labelRow)  labelRow.textContent  = txt + fecha;
+                if (labelRow)  { labelRow.textContent = txt + fecha; labelRow.style.color = 'var(--accent)'; }
             } else {
                 if (labelCard) labelCard.textContent = 'precio n/d';
-                if (labelRow)  labelRow.textContent  = 'precio n/d — introduce manualmente';
-                if (labelRow)  labelRow.style.color  = 'var(--warning)';
+                if (labelRow)  { labelRow.textContent = 'error — pulsa ↻'; labelRow.style.color = 'var(--warning)'; }
             }
         });
-        
+
         if (statusEl) {
             if (ok === fondos.length) {
-                statusEl.textContent = `Precios actualizados · ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})}`;
+                statusEl.textContent = `✓ Precios actualizados · ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})}`;
                 statusEl.style.color = 'var(--accent)';
             } else {
-                statusEl.textContent = `${ok}/${fondos.length} precios cargados`;
+                statusEl.textContent = `⚠ ${ok}/${fondos.length} precios cargados`;
                 statusEl.style.color = 'var(--warning)';
             }
         }
+
         calcular();
         renderDashboard();
     }
 
-    // Carga objetivos guardados (si existen)
+    // Recargar precio de un fondo individual
+    async function recargarPrecioFondo(index) {
+        const fondo = fondos[index];
+        const labelRow  = document.getElementById('precioLabel' + index);
+        const labelCard = document.getElementById('precio' + ['F1','F2','F3'][index]);
+        if (labelRow) labelRow.textContent = 'recargando…';
+
+        const exito = await fetchPrecioFondo(fondo);
+
+        if (exito && fondo.precio !== null) {
+            const txt = `${fondo.precio.toFixed(4)}€/part.`;
+            const fecha = fondo.fechaPrecio ? ` (${fondo.fechaPrecio})` : '';
+            if (labelCard) labelCard.textContent = txt;
+            if (labelRow)  { labelRow.textContent = txt + fecha; labelRow.style.color = 'var(--accent)'; }
+        } else {
+            if (labelCard) labelCard.textContent = 'error';
+            if (labelRow)  { labelRow.textContent = 'error — prueba de nuevo'; labelRow.style.color = 'var(--danger)'; }
+        }
+
+        calcular();
+        renderDashboard();
+    }
+
+    // Exponer funciones al HTML (necesario con type="module")
+    window.cargarPrecios = cargarPrecios;
+    window.recargarPrecioFondo = recargarPrecioFondo;
+
     function cargarObjetivos() {
         fondos.forEach(f => {
             const saved = localStorage.getItem('obj_' + f.id);
@@ -743,7 +790,6 @@
         });
     }
 
-    // Helper: valor en € de un fondo = participaciones × precio
     function valorFondo(f) {
         const partic = parseFloat(localStorage.getItem(f.id)) || 0;
         const precio = f.precio || 0;
@@ -767,7 +813,6 @@
         if (name === 'varios') renderVarios();
     };
 
-    // CARTERA
     window.guardarFondo = (id) => {
         localStorage.setItem(id, document.getElementById(id).value);
         guardarConDebounce();
@@ -776,7 +821,6 @@
     function calcular() {
         let total = 0;
         const vals = fondos.map(f => { const v = valorFondo(f); total += v; return v; });
-        const parts = fondos.map(f => parseFloat(localStorage.getItem(f.id)) || 0);
 
         fondos.forEach((f, i) => {
             const p = total > 0 ? (vals[i]/total*100).toFixed(1) : '0.0';
@@ -914,8 +958,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
                 <div style="font-size:0.82em;color:var(--muted);">
                     Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(totalActualEur)}</span>
-                    &nbsp;+&nbsp;
-                    aportación <span style="font-family:var(--mono);color:var(--accent);">${fmtN(dca)}</span>
+                    &nbsp;+&nbsp;aportación <span style="font-family:var(--mono);color:var(--accent);">${fmtN(dca)}</span>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">Total tras DCA</div>
@@ -948,7 +991,7 @@
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
         const sinPrecio = fondos.filter(f => !f.precio);
         if (sinPrecio.length > 0) {
-            alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', ') + '. Espera a que carguen.');
+            alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', '));
             return;
         }
         if (!confirm('¿Aplicar este DCA y actualizar las participaciones?')) return;
@@ -1034,7 +1077,6 @@
 
     function renderDepositos() {
         let totalDep = 0, totalBenef = 0, sumPond = 0, sumPeso = 0;
-
         if (depositos.length === 0) {
             document.getElementById('depProgressContainer').innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Sin depósitos registrados.</p>';
             document.getElementById('depBody').innerHTML = '';
@@ -1044,7 +1086,6 @@
         }
 
         document.getElementById('depProgressContainer').innerHTML = depositos.map(buildProgressHTML).join('');
-
         document.getElementById('depBody').innerHTML = depositos.map(d => {
             const est = estadoDeposito(d.fecha);
             const benNeto = d.cantidad * (d.tae/100) * (d.duracion/12) * 0.81;
@@ -1079,8 +1120,8 @@
     function renderDashboard() {
         let totalCartera = 0;
         fondos.forEach(f => totalCartera += valorFondo(f));
-        let totalDep = depositos.reduce((s, d) => s + d.cantidad, 0);
-        let totalVar = varios.reduce((s, v) => s + v.importe, 0);
+        const totalDep = depositos.reduce((s, d) => s + d.cantidad, 0);
+        const totalVar = varios.reduce((s, v) => s + v.importe, 0);
         const patrimonio = totalCartera + totalDep + totalVar;
 
         document.getElementById('dashTotal').textContent = fmtN(patrimonio);
@@ -1103,8 +1144,7 @@
 
         drawPie(totalCartera, totalDep, totalVar);
 
-        const progEl = document.getElementById('dashDepProgress');
-        progEl.innerHTML = depositos.length === 0
+        document.getElementById('dashDepProgress').innerHTML = depositos.length === 0
             ? '<p style="color:var(--muted);font-size:0.86em;">Sin depósitos registrados.</p>'
             : depositos.map(buildProgressHTML).join('');
 
@@ -1114,7 +1154,7 @@
         renderHistorialDCA();
     }
 
-    // ======= RENTABILIDAD ESTIMADA =======
+    // RENTABILIDAD
     const rentabilidades = [
         { id: 'fund1', nombre: 'iShares Developed World', rentAnual: 10.2 },
         { id: 'fund2', nombre: 'iShares Emerging Markets', rentAnual: 6.1 },
@@ -1158,16 +1198,13 @@
         el.innerHTML = html;
     }
 
-    // ======= EVOLUCIÓN PATRIMONIO (snapshots) =======
+    // SNAPSHOTS / EVOLUCIÓN
     function guardarSnapshotPatrimonio(patrimonio) {
         if (patrimonio === 0) return;
         const hoy = new Date().toISOString().split('T')[0];
         const idx = snapshots.findIndex(s => s.fecha === hoy);
-        if (idx >= 0) {
-            snapshots[idx].valor = patrimonio;
-        } else {
-            snapshots.push({ fecha: hoy, valor: patrimonio });
-        }
+        if (idx >= 0) { snapshots[idx].valor = patrimonio; }
+        else { snapshots.push({ fecha: hoy, valor: patrimonio }); }
         localStorage.setItem('snapshots', JSON.stringify(snapshots));
         guardarConDebounce();
     }
@@ -1207,15 +1244,12 @@
         const grad = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
         grad.addColorStop(0, 'rgba(74,222,128,0.25)');
         grad.addColorStop(1, 'rgba(74,222,128,0)');
-        ctx.fillStyle = grad;
-        ctx.fill();
+        ctx.fillStyle = grad; ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(xOf(0), yOf(vals[0]));
         sorted.forEach((s, i) => ctx.lineTo(xOf(i), yOf(s.valor)));
-        ctx.strokeStyle = '#4ade80';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2; ctx.stroke();
 
         ctx.fillStyle = '#4ade80';
         sorted.forEach((s, i) => {
@@ -1224,20 +1258,17 @@
             ctx.fill();
         });
 
-        ctx.fillStyle = '#6b7a99';
-        ctx.font = '10px DM Mono';
+        ctx.fillStyle = '#6b7a99'; ctx.font = '10px DM Mono';
         ctx.textAlign = 'left';
         ctx.fillText(sorted[0].fecha, pad.left, H - 6);
         ctx.textAlign = 'right';
         ctx.fillText(sorted[sorted.length - 1].fecha, W - pad.right, H - 6);
 
-        ctx.fillStyle = '#4ade80';
-        ctx.font = 'bold 12px DM Mono';
-        ctx.textAlign = 'right';
+        ctx.fillStyle = '#4ade80'; ctx.font = 'bold 12px DM Mono'; ctx.textAlign = 'right';
         ctx.fillText(fmtN(vals[vals.length - 1]), W - pad.right, yOf(vals[vals.length - 1]) - 8);
     }
 
-    // ======= HISTORIAL DCA =======
+    // HISTORIAL DCA
     function registrarDCA(importe) {
         historialDCA.push({
             fecha: new Date().toISOString().split('T')[0],
@@ -1310,7 +1341,7 @@
         document.getElementById('pieLegend').innerHTML = vals.map((v, i) => v !== 0 ? `
             <div class="legend-item">
                 <div class="legend-dot" style="background:${v < 0 ? 'var(--danger)' : colors[i]}"></div>
-                <div class="legend-name">${labels[i]}${v < 0 ? ' <span style="font-size:0.8em;color:var(--danger)">(deuda)</span>' : ''}</div>
+                <div class="legend-name">${labels[i]}</div>
                 <div class="legend-val" style="color:${v < 0 ? 'var(--danger)' : 'inherit'}">${fmtN(v)}</div>
                 <div class="legend-perc">${patrimonio !== 0 ? (v/patrimonio*100).toFixed(1)+'%' : '0%'}</div>
             </div>` : '').join('');
@@ -1409,18 +1440,14 @@
         document.getElementById('numVarios').textContent = varios.length;
         document.getElementById('totalAparcado').textContent = fmtN(totalAparcado);
 
-        let alertas = '';
-        if (totalAparcado > 0) {
-            alertas = `<div class="alert alert-warn">⚡ Tienes ${fmtN(totalAparcado)} aparcados sin invertir. ¿Es el momento de hacer un DCA?</div>`;
-        }
-        document.getElementById('variosAlertas').innerHTML = alertas;
+        document.getElementById('variosAlertas').innerHTML = totalAparcado > 0
+            ? `<div class="alert alert-warn">⚡ Tienes ${fmtN(totalAparcado)} aparcados sin invertir. ¿Es el momento de hacer un DCA?</div>` : '';
 
         const container = document.getElementById('variosContainer');
         if (varios.length === 0) {
             container.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Sin activos registrados.</p>';
             return;
         }
-
         container.innerHTML = varios.map(v => {
             const color = categoriaColors[v.categoria] || '#a78bfa';
             const label = categoriaLabels[v.categoria] || v.categoria;
@@ -1444,7 +1471,7 @@
         }).join('');
     }
 
-    // EXPORT/IMPORT
+    // EXPORT / IMPORT
     window.exportarDatos = () => {
         const datos = { fondos: {}, depositos, varios };
         fondos.forEach(f => datos.fondos[f.id] = localStorage.getItem(f.id));
@@ -1473,15 +1500,15 @@
     // UTILS
     function fmtN(n) {
         const val = (n === null || n === undefined) ? 0 : n;
-        return val.toLocaleString('es-ES', {maximumFractionDigits:0}) + '€';
+        return val.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + '€';
     }
     function fmtShort(n) {
-        if (n >= 1000000) return (n/1000000).toFixed(1)+'M€';
-        if (n >= 1000) return Math.round(n/1000)+'k€';
+        if (n >= 1000000) return (n/1000000).toFixed(1) + 'M€';
+        if (n >= 1000) return Math.round(n/1000) + 'k€';
         return fmtN(n);
     }
 
-    // INIT (llamado tras login)
+    // INIT
     function inicializarApp() {
         cargarObjetivos();
         fondos.forEach(f => {
@@ -1500,7 +1527,6 @@
         cargarPrecios();
     }
 </script>
-</div><!-- /appScreen -->
-
+</div>
 </body>
 </html>
