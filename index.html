@@ -100,7 +100,8 @@
             font-size: 0.87em; width: 100%; transition: border-color 0.2s;
         }
         .input-wrap input:focus { outline: none; border-color: var(--accent); }
-        .input-wrap::after {
+        /* Solo inputs con clase .euro-suffix muestran el símbolo € */
+        .input-wrap.euro-suffix::after {
             content: '€'; position: absolute; right: 10px; top: 50%;
             transform: translateY(-50%); color: var(--muted); font-size: 0.82em; pointer-events: none;
         }
@@ -342,21 +343,22 @@
         <div class="card">
             <div class="card-label">Total Invertido</div>
             <div class="card-value green" id="totalInvertido">0€</div>
+            <div class="card-sub" id="preciosStatus" style="color:var(--muted)">Cargando precios…</div>
         </div>
         <div class="card">
             <div class="card-label">Developed World</div>
             <div class="card-value blue" id="totalF1">0€</div>
-            <div class="card-sub" id="percF1card">0%</div>
+            <div class="card-sub" id="percF1card">0% · <span id="precioF1" style="font-family:var(--mono)">—</span></div>
         </div>
         <div class="card">
             <div class="card-label">Emerging Markets</div>
             <div class="card-value" id="totalF2">0€</div>
-            <div class="card-sub" id="percF2card">0%</div>
+            <div class="card-sub" id="percF2card">0% · <span id="precioF2" style="font-family:var(--mono)">—</span></div>
         </div>
         <div class="card">
             <div class="card-label">Small-Cap</div>
             <div class="card-value" id="totalF3">0€</div>
-            <div class="card-sub" id="percF3card">0%</div>
+            <div class="card-sub" id="percF3card">0% · <span id="precioF3" style="font-family:var(--mono)">—</span></div>
         </div>
     </div>
 
@@ -378,48 +380,63 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Mis Fondos</div>
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Mis Fondos</span>
+            <button class="btn btn-ghost" onclick="cargarPrecios()" style="padding:5px 12px;font-size:0.76em;">↻ Actualizar precios</button>
+        </div>
         <div class="fondo-row" style="padding-bottom:8px;">
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Fondo</div>
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Obj. %</div>
             <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Act.</div>
-            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Importe</div>
+            <div style="font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:right">Participaciones</div>
         </div>
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">iShares Developed World <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06%</div>
+                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06% · <span id="precioLabel0" style="color:var(--accent)">cargando…</span></div>
             </div>
             <div class="fondo-obj">
                 <input type="number" id="objInput0" value="75" min="0" max="100" step="1" oninput="guardarObjetivo(0,this.value)"
                     style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
             </div>
             <div class="fondo-perc" id="perc1">0%</div>
-            <div class="input-wrap"><input type="number" id="fund1" value="0" step="100" oninput="guardarFondo('fund1');calcular();"></div>
+            <div class="input-wrap" style="--unit:'part'">
+                <input type="number" id="fund1" value="0" step="0.001" min="0" oninput="guardarFondo('fund1');calcular();"
+                    style="padding-right:44px;">
+                <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.72em;pointer-events:none;">part.</span>
+            </div>
         </div>
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">iShares Emerging Markets <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20%</div>
+                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20% · <span id="precioLabel1" style="color:var(--accent)">cargando…</span></div>
             </div>
             <div class="fondo-obj">
                 <input type="number" id="objInput1" value="13" min="0" max="100" step="1" oninput="guardarObjetivo(1,this.value)"
                     style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
             </div>
             <div class="fondo-perc" id="perc2">0%</div>
-            <div class="input-wrap"><input type="number" id="fund2" value="0" step="100" oninput="guardarFondo('fund2');calcular();"></div>
+            <div class="input-wrap">
+                <input type="number" id="fund2" value="0" step="0.001" min="0" oninput="guardarFondo('fund2');calcular();"
+                    style="padding-right:44px;">
+                <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.72em;pointer-events:none;">part.</span>
+            </div>
         </div>
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">Vanguard Global Small-Cap <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE00B42W4L06 · TER 0.29%</div>
+                <div class="fondo-isin">IE00B42W4L06 · TER 0.29% · <span id="precioLabel2" style="color:var(--accent)">cargando…</span></div>
             </div>
             <div class="fondo-obj">
                 <input type="number" id="objInput2" value="12" min="0" max="100" step="1" oninput="guardarObjetivo(2,this.value)"
                     style="width:58px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--accent2);font-family:var(--mono);font-size:0.82em;text-align:right;">
             </div>
             <div class="fondo-perc" id="perc3">0%</div>
-            <div class="input-wrap"><input type="number" id="fund3" value="0" step="100" oninput="guardarFondo('fund3');calcular();"></div>
+            <div class="input-wrap">
+                <input type="number" id="fund3" value="0" step="0.001" min="0" oninput="guardarFondo('fund3');calcular();"
+                    style="padding-right:44px;">
+                <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.72em;pointer-events:none;">part.</span>
+            </div>
         </div>
         <div id="objSumWarn"></div>
     </div>
@@ -642,16 +659,78 @@
     }
 
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World', objetivo: 75 },
-        { id: 'fund2', nombre: 'iShares Emerging Markets', objetivo: 13 },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12 },
+        { id: 'fund1', nombre: 'iShares Developed World',    objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null },
+        { id: 'fund2', nombre: 'iShares Emerging Markets',   objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap',  objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
     ];
+
+    // ======= PRECIOS JUSTETF =======
+    async function fetchPrecioFondo(fondo) {
+        // Intentamos primero con el proxy allorigins para evitar CORS
+        const url = `https://www.justetf.com/api/etfs/${fondo.isin}/quote?locale=en&currency=EUR&isin=${fondo.isin}`;
+        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        try {
+            const res = await fetch(proxy);
+            if (!res.ok) throw new Error('proxy error');
+            const outer = await res.json();
+            const data = JSON.parse(outer.contents);
+            if (data && data.latestQuote && data.latestQuote.raw) {
+                fondo.precio = data.latestQuote.raw;
+                fondo.fechaPrecio = data.latestQuoteDate || null;
+                return true;
+            }
+        } catch(e) {
+            console.warn(`No se pudo obtener precio para ${fondo.isin}:`, e);
+        }
+        return false;
+    }
+
+    async function cargarPrecios() {
+        const statusEl = document.getElementById('preciosStatus');
+        if (statusEl) statusEl.textContent = 'Actualizando precios…';
+        const resultados = await Promise.all(fondos.map(fetchPrecioFondo));
+        const ok = resultados.filter(Boolean).length;
+        // Actualizar etiquetas de precio en la UI
+        fondos.forEach((f, i) => {
+            const labelCard = document.getElementById('precio' + ['F1','F2','F3'][i]);
+            const labelRow  = document.getElementById('precioLabel' + i);
+            if (f.precio !== null) {
+                const txt = `${f.precio.toFixed(4)}€/part.`;
+                const fecha = f.fechaPrecio ? ` (${f.fechaPrecio})` : '';
+                if (labelCard) labelCard.textContent = txt;
+                if (labelRow)  labelRow.textContent  = txt + fecha;
+            } else {
+                if (labelCard) labelCard.textContent = 'precio n/d';
+                if (labelRow)  labelRow.textContent  = 'precio n/d — introduce manualmente';
+                if (labelRow)  labelRow.style.color  = 'var(--warning)';
+            }
+        });
+        if (statusEl) {
+            if (ok === fondos.length) {
+                statusEl.textContent = `Precios actualizados · ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})}`;
+                statusEl.style.color = 'var(--accent)';
+            } else {
+                statusEl.textContent = `${ok}/${fondos.length} precios cargados`;
+                statusEl.style.color = 'var(--warning)';
+            }
+        }
+        calcular();
+        renderDashboard();
+    }
+
     // Carga objetivos guardados (si existen)
     function cargarObjetivos() {
         fondos.forEach(f => {
             const saved = localStorage.getItem('obj_' + f.id);
             if (saved !== null) f.objetivo = parseFloat(saved);
         });
+    }
+
+    // Helper: valor en € de un fondo = participaciones × precio
+    function valorFondo(f) {
+        const partic = parseFloat(localStorage.getItem(f.id)) || 0;
+        const precio = f.precio || 0;
+        return partic * precio;
     }
 
     let depositos = [];
@@ -673,13 +752,15 @@
 
     // CARTERA
     window.guardarFondo = (id) => {
+        // Guardamos participaciones directamente (no euros)
         localStorage.setItem(id, document.getElementById(id).value);
         guardarConDebounce();
     };
 
     function calcular() {
         let total = 0;
-        const vals = fondos.map(f => { const v = parseFloat(document.getElementById(f.id).value) || 0; total += v; return v; });
+        const vals = fondos.map(f => { const v = valorFondo(f); total += v; return v; });
+        const parts = fondos.map(f => parseFloat(localStorage.getItem(f.id)) || 0);
 
         fondos.forEach((f, i) => {
             const p = total > 0 ? (vals[i]/total*100).toFixed(1) : '0.0';
@@ -690,9 +771,15 @@
         document.getElementById('totalF1').textContent = fmtN(vals[0]);
         document.getElementById('totalF2').textContent = fmtN(vals[1]);
         document.getElementById('totalF3').textContent = fmtN(vals[2]);
-        document.getElementById('percF1card').textContent = total > 0 ? (vals[0]/total*100).toFixed(1)+'% del total' : '0%';
-        document.getElementById('percF2card').textContent = total > 0 ? (vals[1]/total*100).toFixed(1)+'% del total' : '0%';
-        document.getElementById('percF3card').textContent = total > 0 ? (vals[2]/total*100).toFixed(1)+'% del total' : '0%';
+
+        // Sub-labels: porcentaje + precio/part
+        const percLabels = ['percF1card','percF2card','percF3card'];
+        const precioIds  = ['precioF1','precioF2','precioF3'];
+        fondos.forEach((f, i) => {
+            const perc = total > 0 ? (vals[i]/total*100).toFixed(1)+'%' : '0%';
+            const el = document.getElementById(percLabels[i]);
+            if (el) el.innerHTML = `${perc} · <span id="${precioIds[i]}" style="font-family:var(--mono)">${f.precio !== null ? f.precio.toFixed(4)+'€' : '—'}</span>`;
+        });
 
         const p1 = total > 0 ? vals[0]/total*100 : 0;
         const p2 = total > 0 ? vals[1]/total*100 : 0;
@@ -761,30 +848,41 @@
             return;
         }
 
-        const actuales = fondos.map(f => parseFloat(document.getElementById(f.id).value) || 0);
-        const totalActual = actuales.reduce((s, v) => s + v, 0);
-        const totalFut = totalActual + dca;
+        const sinPrecio = fondos.filter(f => !f.precio);
+        if (sinPrecio.length > 0) {
+            document.getElementById('dcaResult').innerHTML = `<div class="alert alert-warn" style="margin-top:14px">⏳ Esperando precios de: ${sinPrecio.map(f=>f.nombre).join(', ')}. Reintenta en unos segundos.</div>`;
+            return;
+        }
+
+        // Trabajamos en € durante el cálculo
+        const actualesEur = fondos.map(f => valorFondo(f));
+        const totalActualEur = actualesEur.reduce((s, v) => s + v, 0);
+        const totalFutEur = totalActualEur + dca;
         const objetivos = fondos.map(f => f.objetivo / 100);
-        const targets = objetivos.map(o => totalFut * o);
-        let necesidades = targets.map((t, i) => Math.max(0, t - actuales[i]));
+        const targets = objetivos.map(o => totalFutEur * o);
+        let necesidades = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
         const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
 
-        let aportaciones;
+        let aportacionesEur;
         if (sumaNecesidades <= 0) {
-            aportaciones = objetivos.map(o => dca * o);
+            aportacionesEur = objetivos.map(o => dca * o);
         } else if (sumaNecesidades <= dca) {
             const exceso = dca - sumaNecesidades;
-            aportaciones = necesidades.map((n, i) => n + exceso * objetivos[i]);
+            aportacionesEur = necesidades.map((n, i) => n + exceso * objetivos[i]);
         } else {
             const factor = dca / sumaNecesidades;
-            aportaciones = necesidades.map(n => n * factor);
+            aportacionesEur = necesidades.map(n => n * factor);
         }
 
         let html = '<div class="dca-result">';
         fondos.forEach((f, i) => {
-            const imp = aportaciones[i];
-            const nuevo = actuales[i] + imp;
-            const pFut = totalFut > 0 ? (nuevo/totalFut*100).toFixed(1) : 0;
+            const eurAportar = aportacionesEur[i];
+            // Convertir € → participaciones
+            const partNuevas = eurAportar / f.precio;
+            const partActuales = parseFloat(localStorage.getItem(f.id)) || 0;
+            const partNuevoTotal = partActuales + partNuevas;
+            const eurNuevoTotal = partNuevoTotal * f.precio;
+            const pFut = totalFutEur > 0 ? (eurNuevoTotal/totalFutEur*100).toFixed(1) : 0;
             const desv = (parseFloat(pFut) - f.objetivo).toFixed(1);
             const desvColor = Math.abs(parseFloat(desv)) < 0.5 ? 'var(--accent)' : Math.abs(parseFloat(desv)) < 2 ? 'var(--warning)' : 'var(--danger)';
             html += `
@@ -792,38 +890,39 @@
                     <div>
                         <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
                         <div class="dca-nuevo">
-                            → Nuevo total: ${fmtN(nuevo)}
+                            +${partNuevas.toFixed(4)} part. · <span style="color:var(--accent2)">@${f.precio.toFixed(4)}€</span><br>
+                            → Total: ${partNuevoTotal.toFixed(4)} part. = ${fmtN(eurNuevoTotal)}
                             <span style="color:var(--accent2)">(${pFut}%)</span>
                             <span style="color:${desvColor};font-size:0.85em"> ${parseFloat(desv)>=0?'+':''}${desv}pp vs obj. ${f.objetivo}%</span>
                         </div>
                     </div>
-                    <div class="dca-amount">+${fmtN(imp)}</div>
+                    <div class="dca-amount">+${fmtN(eurAportar)}</div>
                 </div>`;
         });
         html += `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
                 <div style="font-size:0.82em;color:var(--muted);">
-                    Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(totalActual)}</span>
+                    Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(totalActualEur)}</span>
                     &nbsp;+&nbsp;
                     aportación <span style="font-family:var(--mono);color:var(--accent);">${fmtN(dca)}</span>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">Total tras DCA</div>
-                    <div style="font-family:var(--mono);font-size:1.4em;font-weight:500;color:var(--accent);">${fmtN(totalFut)}</div>
+                    <div style="font-family:var(--mono);font-size:1.4em;font-weight:500;color:var(--accent);">${fmtN(totalFutEur)}</div>
                 </div>
             </div>`;
         html += '</div>';
         document.getElementById('dcaResult').innerHTML = html;
     };
 
-    // Función auxiliar compartida para calcular aportaciones equilibradas
+    // Función auxiliar compartida para calcular aportaciones equilibradas (devuelve € por fondo)
     function calcularAportacionesEquilibradas(dca) {
-        const actuales = fondos.map(f => parseFloat(document.getElementById(f.id).value) || 0);
-        const totalActual = actuales.reduce((s, v) => s + v, 0);
-        const totalFut = totalActual + dca;
+        const actualesEur = fondos.map(f => valorFondo(f));
+        const totalActualEur = actualesEur.reduce((s, v) => s + v, 0);
+        const totalFutEur = totalActualEur + dca;
         const objetivos = fondos.map(f => f.objetivo / 100);
-        const targets = objetivos.map(o => totalFut * o);
-        let necesidades = targets.map((t, i) => Math.max(0, t - actuales[i]));
+        const targets = objetivos.map(o => totalFutEur * o);
+        let necesidades = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
         const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
         if (sumaNecesidades <= 0) return objetivos.map(o => dca * o);
         if (sumaNecesidades <= dca) {
@@ -837,18 +936,27 @@
     window.aplicarDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
-        if (!confirm('¿Aplicar este DCA y actualizar los importes?')) return;
-        const aportaciones = calcularAportacionesEquilibradas(dca);
+        const sinPrecio = fondos.filter(f => !f.precio);
+        if (sinPrecio.length > 0) {
+            alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', ') + '. Espera a que carguen.');
+            return;
+        }
+        if (!confirm('¿Aplicar este DCA y actualizar las participaciones?')) return;
+
+        const aportacionesEur = calcularAportacionesEquilibradas(dca);
         fondos.forEach((f, i) => {
-            const nuevo = (parseFloat(document.getElementById(f.id).value) || 0) + aportaciones[i];
-            document.getElementById(f.id).value = nuevo.toFixed(2);
-            localStorage.setItem(f.id, nuevo.toFixed(2));
+            // Convertir € aportados → participaciones nuevas
+            const partNuevas = aportacionesEur[i] / f.precio;
+            const partActuales = parseFloat(document.getElementById(f.id).value) || 0;
+            const partNuevoTotal = partActuales + partNuevas;
+            document.getElementById(f.id).value = partNuevoTotal.toFixed(6);
+            localStorage.setItem(f.id, partNuevoTotal.toFixed(6));
         });
         guardarFirestore();
         registrarDCA(dca);
         calcular();
         document.getElementById('dcaAmount').value = '';
-        document.getElementById('dcaResult').innerHTML = '<div class="alert alert-ok" style="margin-top:14px">✓ DCA aplicado. Importes actualizados.</div>';
+        document.getElementById('dcaResult').innerHTML = '<div class="alert alert-ok" style="margin-top:14px">✓ DCA aplicado. Participaciones actualizadas.</div>';
     };
 
     // DEPÓSITOS
@@ -961,7 +1069,7 @@
     // DASHBOARD
     function renderDashboard() {
         let totalCartera = 0;
-        fondos.forEach(f => totalCartera += parseFloat(localStorage.getItem(f.id)) || 0);
+        fondos.forEach(f => totalCartera += valorFondo(f));
         let totalDep = depositos.reduce((s, d) => s + d.cantidad, 0);
         let totalVar = varios.reduce((s, v) => s + v.importe, 0);
         const patrimonio = totalCartera + totalDep + totalVar;
@@ -1007,18 +1115,23 @@
     function renderRentabilidad(totalCartera) {
         const el = document.getElementById('rentabilidadContainer');
         if (totalCartera === 0) {
-            el.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Introduce importes en la Cartera DCA para ver la rentabilidad estimada.</p>';
+            el.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Introduce participaciones en la Cartera DCA para ver la rentabilidad estimada.</p>';
             return;
         }
         let rentPonderada = 0;
         let html = '';
         rentabilidades.forEach(r => {
-            const val = parseFloat(localStorage.getItem(r.id)) || 0;
+            // val en € = participaciones × precio
+            const fondo = fondos.find(f => f.id === r.id);
+            const val = fondo ? valorFondo(fondo) : 0;
             const peso = totalCartera > 0 ? val / totalCartera : 0;
             rentPonderada += peso * r.rentAnual;
+            const partic = parseFloat(localStorage.getItem(r.id)) || 0;
             html += `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
-                    <div style="font-size:0.88em;">${r.nombre}</div>
+                    <div style="font-size:0.88em;">${r.nombre}
+                        <span style="font-size:0.76em;color:var(--muted);margin-left:8px;">${partic.toFixed(4)} part.</span>
+                    </div>
                     <div style="display:flex;gap:20px;align-items:center;">
                         <span style="font-size:0.78em;color:var(--muted);">${(peso*100).toFixed(1)}% del total</span>
                         <span style="font-family:var(--mono);font-size:0.88em;color:var(--accent);">~${r.rentAnual}% anual</span>
@@ -1320,7 +1433,7 @@
                         </div>
                         ${v.notas ? `<div style="font-size:0.76em;color:var(--muted);margin-top:3px;">${v.notas}</div>` : ''}
                     </div>
-                    <div class="input-wrap">
+                    <div class="input-wrap euro-suffix">
                         <input type="number" value="${v.importe}" step="100"
                             oninput="updateVarioImporte(${v.id}, this.value)"
                             style="width:100%;${esDeuda ? 'color:var(--danger);border-color:rgba(248,113,113,0.4);' : ''}">
@@ -1370,17 +1483,24 @@
     // INIT (llamado tras login)
     function inicializarApp() {
         cargarObjetivos();
-        fondos.forEach(f => { const v = localStorage.getItem(f.id); if (v) document.getElementById(f.id).value = v; });
+        // Cargar participaciones guardadas en los inputs
+        fondos.forEach(f => {
+            const v = localStorage.getItem(f.id);
+            if (v) document.getElementById(f.id).value = v;
+        });
         // Rellenar inputs de objetivo
         fondos.forEach((f, i) => {
             const el = document.getElementById('objInput' + i);
             if (el) el.value = f.objetivo;
         });
         renderBarraObjetivo();
+        // Primero render inicial con precios a null (muestra 0€)
         calcular();
         renderDepositos();
         renderVarios();
         renderDashboard();
+        // Luego carga precios de JustETF en paralelo y actualiza todo
+        cargarPrecios();
     }
 </script>
 </div><!-- /appScreen -->
