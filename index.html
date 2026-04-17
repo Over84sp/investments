@@ -594,63 +594,126 @@
     let userId = null;
     let guardadoPendiente = null;
 
+    // ─── localStorage con prefijo de usuario ───────────────────────────────────
+    // Todas las lecturas/escrituras pasan por aquí, así cada cuenta
+    // tiene su propio espacio y nunca se mezclan los datos.
+    function lsGet(key) {
+        if (!userId) return null;
+        return localStorage.getItem(`${userId}__${key}`);
+    }
+    function lsSet(key, value) {
+        if (!userId) return;
+        localStorage.setItem(`${userId}__${key}`, value);
+    }
+    function lsRemove(key) {
+        if (!userId) return;
+        localStorage.removeItem(`${userId}__${key}`);
+    }
+
+    // Borra SOLO las claves de este usuario (no toca las de otros usuarios)
+    function limpiarStorageUsuario(uid) {
+        const prefix = `${uid}__`;
+        Object.keys(localStorage)
+            .filter(k => k.startsWith(prefix))
+            .forEach(k => localStorage.removeItem(k));
+    }
+
+    // ─── Auth ──────────────────────────────────────────────────────────────────
     window.loginGoogle = async () => {
         try { await signInWithPopup(auth, new GoogleAuthProvider()); }
         catch(e) { console.error(e); alert('Error al iniciar sesión'); }
     };
 
-    window.cerrarSesion = async () => { await signOut(auth); };
+    window.cerrarSesion = async () => {
+        await signOut(auth);
+    };
 
     onAuthStateChanged(auth, async user => {
         if (user) {
+            // Si había otro usuario logueado antes, reseteamos el estado en memoria
+            if (userId && userId !== user.uid) {
+                resetearEstadoMemoria();
+            }
+
             userId = user.uid;
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'block';
+            document.getElementById('appScreen').style.display  = 'block';
             document.getElementById('userEmail').textContent = user.email;
+
             await cargarDatosFirestore();
             inicializarApp();
         } else {
             userId = null;
+            resetearEstadoMemoria();
             document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display  = 'none';
         }
     });
 
+    // Limpia las variables en memoria al cambiar de usuario
+    function resetearEstadoMemoria() {
+        depositos   = [];
+        varios      = [];
+        snapshots   = [];
+        historialDCA = [];
+        fondos.forEach(f => {
+            f.precio      = null;
+            f.fechaPrecio = null;
+            f.objetivo    = [75, 13, 12][fondos.indexOf(f)]; // valores por defecto
+        });
+    }
+
+    // ─── Firestore ─────────────────────────────────────────────────────────────
     async function cargarDatosFirestore() {
         try {
             const snap = await getDoc(doc(db, 'usuarios', userId));
             if (snap.exists()) {
                 const data = snap.data();
-                depositos = data.depositos || [];
-                varios = data.varios || [];
-                snapshots = data.snapshots || JSON.parse(localStorage.getItem('snapshots') || '[]');
-                historialDCA = data.historialDCA || JSON.parse(localStorage.getItem('historialDCA') || '[]');
-                if (data.fondos) Object.entries(data.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
-                if (data.objetivos) Object.entries(data.objetivos).forEach(([k,v]) => {
-                    localStorage.setItem('obj_' + k, v);
-                });
+                depositos    = data.depositos    || [];
+                varios       = data.varios       || [];
+                snapshots    = data.snapshots    || JSON.parse(lsGet('snapshots')    || '[]');
+                historialDCA = data.historialDCA || JSON.parse(lsGet('historialDCA') || '[]');
+
+                // Volcamos fondos y objetivos al localStorage de ESTE usuario
+                if (data.fondos) {
+                    Object.entries(data.fondos).forEach(([k, v]) => lsSet(k, v));
+                }
+                if (data.objetivos) {
+                    Object.entries(data.objetivos).forEach(([k, v]) => lsSet('obj_' + k, v));
+                }
             } else {
-                snapshots = JSON.parse(localStorage.getItem('snapshots') || '[]');
-                historialDCA = JSON.parse(localStorage.getItem('historialDCA') || '[]');
+                // Usuario nuevo: arrancamos desde cero (sin herencia de localStorage)
+                depositos    = [];
+                varios       = [];
+                snapshots    = [];
+                historialDCA = [];
             }
-        } catch(e) { console.error('Error cargando datos:', e); }
+        } catch(e) {
+            console.error('Error cargando datos:', e);
+        }
     }
 
     async function guardarFirestore() {
         if (!userId) return;
-        const fondosData = {};
+        const fondosData    = {};
         const objetivosData = {};
         fondos.forEach(f => {
-            fondosData[f.id] = localStorage.getItem(f.id) || '0';
+            fondosData[f.id]    = lsGet(f.id) || '0';
             objetivosData[f.id] = f.objetivo;
         });
         try {
             await setDoc(doc(db, 'usuarios', userId), {
-                fondos: fondosData, objetivos: objetivosData, depositos, varios,
-                snapshots, historialDCA,
+                fondos: fondosData,
+                objetivos: objetivosData,
+                depositos,
+                varios,
+                snapshots,
+                historialDCA,
                 updatedAt: new Date().toISOString()
             });
-        } catch(e) { console.error('Error guardando:', e); }
+        } catch(e) {
+            console.error('Error guardando:', e);
+        }
     }
 
     function guardarConDebounce() {
@@ -658,72 +721,47 @@
         guardadoPendiente = setTimeout(() => guardarFirestore(), 1200);
     }
 
+    // ─── Fondos ────────────────────────────────────────────────────────────────
     const fondos = [
         { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null },
         { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null },
         { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
     ];
 
-    // ======= PRECIOS FINANCIAL TIMES =======
+    // ─── Precios Financial Times ───────────────────────────────────────────────
     async function fetchPrecioFondo(fondo) {
         const proxies = [
             (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
             (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
             (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
         ];
-
         const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
 
         for (let i = 0; i < proxies.length; i++) {
             try {
-                console.log(`[${fondo.isin}] Intentando proxy ${i + 1}...`);
                 const res = await fetch(proxies[i](url));
-                if (!res.ok) {
-                    console.warn(`[${fondo.isin}] Proxy ${i + 1} status: ${res.status}`);
-                    continue;
-                }
-
+                if (!res.ok) continue;
                 const html = await res.text();
                 const parser = new DOMParser();
                 const docParsed = parser.parseFromString(html, 'text/html');
                 const priceElements = docParsed.querySelectorAll('.mod-ui-data-list__value');
-
                 if (priceElements && priceElements.length > 0) {
-                    let precioTexto = priceElements[0].textContent.trim();
-                    console.log(`[${fondo.isin}] Texto raw:`, precioTexto);
-
-                    // FT usa formato INGLÉS: 1,234.56
-                    // → quitar comas (separador de miles), el punto es decimal
-                    precioTexto = precioTexto.replace(/,/g, '');
+                    let precioTexto = priceElements[0].textContent.trim().replace(/,/g, '');
                     const precio = parseFloat(precioTexto);
-                    console.log(`[${fondo.isin}] Precio parseado:`, precio);
-
                     if (!isNaN(precio) && precio > 0) {
                         fondo.precio = precio;
                         fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                        console.log(`✅ [${fondo.isin}] OK: ${precio}€`);
                         return true;
                     }
                 }
-
-                console.warn(`[${fondo.isin}] No se encontró precio en el HTML`);
-
-            } catch(e) {
-                console.warn(`[${fondo.isin}] Error proxy ${i + 1}:`, e.message);
-                continue;
-            }
+            } catch(e) { continue; }
         }
-
-        console.error(`❌ [${fondo.isin}] Sin precio con ningún proxy`);
         return false;
     }
 
     async function cargarPrecios() {
         const statusEl = document.getElementById('preciosStatus');
-        if (statusEl) {
-            statusEl.textContent = 'Actualizando precios…';
-            statusEl.style.color = 'var(--muted)';
-        }
+        if (statusEl) { statusEl.textContent = 'Actualizando precios…'; statusEl.style.color = 'var(--muted)'; }
 
         const resultados = await Promise.all(fondos.map(fetchPrecioFondo));
         const ok = resultados.filter(Boolean).length;
@@ -732,7 +770,7 @@
             const labelCard = document.getElementById('precio' + ['F1','F2','F3'][i]);
             const labelRow  = document.getElementById('precioLabel' + i);
             if (f.precio !== null) {
-                const txt = `${f.precio.toFixed(4)}€/part.`;
+                const txt   = `${f.precio.toFixed(4)}€/part.`;
                 const fecha = f.fechaPrecio ? ` (${f.fechaPrecio})` : '';
                 if (labelCard) labelCard.textContent = txt;
                 if (labelRow)  { labelRow.textContent = txt + fecha; labelRow.style.color = 'var(--accent)'; }
@@ -751,22 +789,18 @@
                 statusEl.style.color = 'var(--warning)';
             }
         }
-
         calcular();
         renderDashboard();
     }
 
-    // Recargar precio de un fondo individual
     async function recargarPrecioFondo(index) {
-        const fondo = fondos[index];
+        const fondo    = fondos[index];
         const labelRow  = document.getElementById('precioLabel' + index);
         const labelCard = document.getElementById('precio' + ['F1','F2','F3'][index]);
         if (labelRow) labelRow.textContent = 'recargando…';
-
         const exito = await fetchPrecioFondo(fondo);
-
         if (exito && fondo.precio !== null) {
-            const txt = `${fondo.precio.toFixed(4)}€/part.`;
+            const txt   = `${fondo.precio.toFixed(4)}€/part.`;
             const fecha = fondo.fechaPrecio ? ` (${fondo.fechaPrecio})` : '';
             if (labelCard) labelCard.textContent = txt;
             if (labelRow)  { labelRow.textContent = txt + fecha; labelRow.style.color = 'var(--accent)'; }
@@ -774,50 +808,53 @@
             if (labelCard) labelCard.textContent = 'error';
             if (labelRow)  { labelRow.textContent = 'error — prueba de nuevo'; labelRow.style.color = 'var(--danger)'; }
         }
-
         calcular();
         renderDashboard();
     }
 
-    // Exponer funciones al HTML (necesario con type="module")
-    window.cargarPrecios = cargarPrecios;
+    window.cargarPrecios       = cargarPrecios;
     window.recargarPrecioFondo = recargarPrecioFondo;
 
+    // ─── Objetivos ─────────────────────────────────────────────────────────────
     function cargarObjetivos() {
         fondos.forEach(f => {
-            const saved = localStorage.getItem('obj_' + f.id);
+            const saved = lsGet('obj_' + f.id);
             if (saved !== null) f.objetivo = parseFloat(saved);
         });
     }
 
+    // ─── Valor de un fondo en € ────────────────────────────────────────────────
     function valorFondo(f) {
-        const partic = parseFloat(localStorage.getItem(f.id)) || 0;
+        const partic = parseFloat(lsGet(f.id)) || 0;
         const precio = f.precio || 0;
         return partic * precio;
     }
 
-    let depositos = [];
-    let varios = [];
-    let snapshots = [];
+    // ─── Estado global ─────────────────────────────────────────────────────────
+    let depositos    = [];
+    let varios       = [];
+    let snapshots    = [];
     let historialDCA = [];
 
-    // TABS
+    // ─── Tabs ──────────────────────────────────────────────────────────────────
     window.showTab = (name, e) => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         if (e && e.target) e.target.classList.add('active');
         document.getElementById('tab-' + name).classList.add('active');
         if (name === 'dashboard') renderDashboard();
-        if (name === 'cartera') { calcular(); prerellenarDCA(); }
+        if (name === 'cartera')   { calcular(); prerellenarDCA(); }
         if (name === 'depositos') renderDepositos();
-        if (name === 'varios') renderVarios();
+        if (name === 'varios')    renderVarios();
     };
 
+    // ─── Guardar fondo (usa lsSet con prefijo) ─────────────────────────────────
     window.guardarFondo = (id) => {
-        localStorage.setItem(id, document.getElementById(id).value);
+        lsSet(id, document.getElementById(id).value);
         guardarConDebounce();
     };
 
+    // ─── Calcular cartera ──────────────────────────────────────────────────────
     function calcular() {
         let total = 0;
         const vals = fondos.map(f => { const v = valorFondo(f); total += v; return v; });
@@ -872,7 +909,7 @@
         const v = parseFloat(val);
         if (isNaN(v) || v < 0) return;
         fondos[idx].objetivo = v;
-        localStorage.setItem('obj_' + fondos[idx].id, v);
+        lsSet('obj_' + fondos[idx].id, v);
         const suma = fondos.reduce((s, f) => s + f.objetivo, 0);
         const warnEl = document.getElementById('objSumWarn');
         if (Math.abs(suma - 100) > 0.05) {
@@ -889,12 +926,15 @@
         const suma = fondos.reduce((s, f) => s + f.objetivo, 0);
         const bar = document.getElementById('distBarObjetivo');
         if (bar) {
-            bar.innerHTML = fondos.map((f, i) => `<div class="dist-bar-fill fill-f${i+1}" style="width:${suma>0?f.objetivo/suma*100:0}%"></div>`).join('');
+            bar.innerHTML = fondos.map((f, i) =>
+                `<div class="dist-bar-fill fill-f${i+1}" style="width:${suma>0?f.objetivo/suma*100:0}%"></div>`
+            ).join('');
         }
         const lbl = document.getElementById('distLabelObjetivo');
         if (lbl) lbl.textContent = fondos.map(f => f.objetivo.toFixed(1)+'%').join(' / ');
     }
 
+    // ─── Calculadora DCA ───────────────────────────────────────────────────────
     window.calcularDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
@@ -904,19 +944,18 @@
             document.getElementById('dcaResult').innerHTML = `<div class="alert alert-danger" style="margin-top:14px">⚠ Los objetivos no suman 100% (${suma.toFixed(1)}%). Corrígelos antes de calcular.</div>`;
             return;
         }
-
         const sinPrecio = fondos.filter(f => !f.precio);
         if (sinPrecio.length > 0) {
             document.getElementById('dcaResult').innerHTML = `<div class="alert alert-warn" style="margin-top:14px">⏳ Esperando precios de: ${sinPrecio.map(f=>f.nombre).join(', ')}. Reintenta en unos segundos.</div>`;
             return;
         }
 
-        const actualesEur = fondos.map(f => valorFondo(f));
+        const actualesEur  = fondos.map(f => valorFondo(f));
         const totalActualEur = actualesEur.reduce((s, v) => s + v, 0);
-        const totalFutEur = totalActualEur + dca;
-        const objetivos = fondos.map(f => f.objetivo / 100);
-        const targets = objetivos.map(o => totalFutEur * o);
-        let necesidades = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
+        const totalFutEur  = totalActualEur + dca;
+        const objetivos    = fondos.map(f => f.objetivo / 100);
+        const targets      = objetivos.map(o => totalFutEur * o);
+        let necesidades    = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
         const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
 
         let aportacionesEur;
@@ -932,13 +971,13 @@
 
         let html = '<div class="dca-result">';
         fondos.forEach((f, i) => {
-            const eurAportar = aportacionesEur[i];
-            const partNuevas = eurAportar / f.precio;
-            const partActuales = parseFloat(localStorage.getItem(f.id)) || 0;
+            const eurAportar    = aportacionesEur[i];
+            const partNuevas    = eurAportar / f.precio;
+            const partActuales  = parseFloat(lsGet(f.id)) || 0;
             const partNuevoTotal = partActuales + partNuevas;
             const eurNuevoTotal = partNuevoTotal * f.precio;
-            const pFut = totalFutEur > 0 ? (eurNuevoTotal/totalFutEur*100).toFixed(1) : 0;
-            const desv = (parseFloat(pFut) - f.objetivo).toFixed(1);
+            const pFut  = totalFutEur > 0 ? (eurNuevoTotal/totalFutEur*100).toFixed(1) : 0;
+            const desv  = (parseFloat(pFut) - f.objetivo).toFixed(1);
             const desvColor = Math.abs(parseFloat(desv)) < 0.5 ? 'var(--accent)' : Math.abs(parseFloat(desv)) < 2 ? 'var(--warning)' : 'var(--danger)';
             html += `
                 <div class="dca-fund-row">
@@ -970,12 +1009,12 @@
     };
 
     function calcularAportacionesEquilibradas(dca) {
-        const actualesEur = fondos.map(f => valorFondo(f));
+        const actualesEur    = fondos.map(f => valorFondo(f));
         const totalActualEur = actualesEur.reduce((s, v) => s + v, 0);
-        const totalFutEur = totalActualEur + dca;
-        const objetivos = fondos.map(f => f.objetivo / 100);
-        const targets = objetivos.map(o => totalFutEur * o);
-        let necesidades = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
+        const totalFutEur    = totalActualEur + dca;
+        const objetivos      = fondos.map(f => f.objetivo / 100);
+        const targets        = objetivos.map(o => totalFutEur * o);
+        let necesidades      = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
         const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
         if (sumaNecesidades <= 0) return objetivos.map(o => dca * o);
         if (sumaNecesidades <= dca) {
@@ -990,19 +1029,16 @@
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
         const sinPrecio = fondos.filter(f => !f.precio);
-        if (sinPrecio.length > 0) {
-            alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', '));
-            return;
-        }
+        if (sinPrecio.length > 0) { alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', ')); return; }
         if (!confirm('¿Aplicar este DCA y actualizar las participaciones?')) return;
 
         const aportacionesEur = calcularAportacionesEquilibradas(dca);
         fondos.forEach((f, i) => {
-            const partNuevas = aportacionesEur[i] / f.precio;
-            const partActuales = parseFloat(document.getElementById(f.id).value) || 0;
+            const partNuevas     = aportacionesEur[i] / f.precio;
+            const partActuales   = parseFloat(document.getElementById(f.id).value) || 0;
             const partNuevoTotal = partActuales + partNuevas;
             document.getElementById(f.id).value = partNuevoTotal.toFixed(6);
-            localStorage.setItem(f.id, partNuevoTotal.toFixed(6));
+            lsSet(f.id, partNuevoTotal.toFixed(6));
         });
         guardarFirestore();
         registrarDCA(dca);
@@ -1011,16 +1047,16 @@
         document.getElementById('dcaResult').innerHTML = '<div class="alert alert-ok" style="margin-top:14px">✓ DCA aplicado. Participaciones actualizadas.</div>';
     };
 
-    // DEPÓSITOS
+    // ─── Depósitos ─────────────────────────────────────────────────────────────
     window.addDeposito = () => {
         const d = {
             id: Date.now(),
-            banco: document.getElementById('depBanco').value.trim(),
+            banco:    document.getElementById('depBanco').value.trim(),
             cantidad: parseFloat(document.getElementById('depCantidad').value),
-            tae: parseFloat(document.getElementById('depTAE').value),
+            tae:      parseFloat(document.getElementById('depTAE').value),
             duracion: parseInt(document.getElementById('depDuracion').value),
-            fecha: document.getElementById('depFecha').value,
-            notas: document.getElementById('depNotas').value.trim()
+            fecha:    document.getElementById('depFecha').value,
+            notas:    document.getElementById('depNotas').value.trim()
         };
         if (!d.banco || !d.cantidad || !d.tae || !d.duracion || !d.fecha) { alert('Completa los campos obligatorios'); return; }
         depositos.push(d);
@@ -1038,27 +1074,27 @@
     };
 
     function estadoDeposito(fechaStr) {
-        const hoy = new Date();
+        const hoy  = new Date();
         const venc = new Date(fechaStr);
         const dias = Math.ceil((venc - hoy) / 86400000);
-        if (dias < 0) return { tipo: 'vencido', dias };
-        if (dias <= 30) return { tipo: 'proximo', dias };
+        if (dias < 0)   return { tipo: 'vencido',  dias };
+        if (dias <= 30) return { tipo: 'proximo',  dias };
         return { tipo: 'ok', dias };
     }
 
     function buildProgressHTML(d) {
-        const venc = new Date(d.fecha);
-        const ini = new Date(d.fecha);
+        const venc     = new Date(d.fecha);
+        const ini      = new Date(d.fecha);
         ini.setMonth(ini.getMonth() - d.duracion);
-        const hoy = new Date();
+        const hoy      = new Date();
         const totalDias = (venc - ini) / 86400000;
         const diasTrans = Math.max(0, (hoy - ini) / 86400000);
-        const prog = Math.min(100, diasTrans / totalDias * 100);
-        const est = estadoDeposito(d.fecha);
+        const prog     = Math.min(100, diasTrans / totalDias * 100);
+        const est      = estadoDeposito(d.fecha);
         const fillClass = est.tipo === 'vencido' ? 'vencido' : est.tipo === 'proximo' ? 'proximo' : '';
-        const tagClass = est.tipo === 'vencido' ? 'tag-danger' : est.tipo === 'proximo' ? 'tag-warn' : 'tag-ok';
-        const tagLabel = est.tipo === 'vencido' ? 'Vencido' : est.tipo === 'proximo' ? `Vence en ${est.dias}d` : `${est.dias}d restantes`;
-        const benNeto = d.cantidad * (d.tae/100) * (d.duracion/12) * 0.81;
+        const tagClass  = est.tipo === 'vencido' ? 'tag-danger' : est.tipo === 'proximo' ? 'tag-warn' : 'tag-ok';
+        const tagLabel  = est.tipo === 'vencido' ? 'Vencido' : est.tipo === 'proximo' ? `Vence en ${est.dias}d` : `${est.dias}d restantes`;
+        const benNeto   = d.cantidad * (d.tae/100) * (d.duracion/12) * 0.81;
         return `
             <div class="dep-progress-wrap">
                 <div class="dep-progress-header">
@@ -1087,11 +1123,11 @@
 
         document.getElementById('depProgressContainer').innerHTML = depositos.map(buildProgressHTML).join('');
         document.getElementById('depBody').innerHTML = depositos.map(d => {
-            const est = estadoDeposito(d.fecha);
+            const est    = estadoDeposito(d.fecha);
             const benNeto = d.cantidad * (d.tae/100) * (d.duracion/12) * 0.81;
-            totalDep += d.cantidad;
+            totalDep   += d.cantidad;
             totalBenef += benNeto;
-            const peso = d.cantidad * (d.duracion/12);
+            const peso  = d.cantidad * (d.duracion/12);
             sumPond += d.tae * peso; sumPeso += peso;
             const tagClass = est.tipo === 'vencido' ? 'tag-danger' : est.tipo === 'proximo' ? 'tag-warn' : 'tag-ok';
             const tagLabel = est.tipo === 'vencido' ? 'Vencido' : `${est.dias}d`;
@@ -1111,12 +1147,12 @@
             </tr>`;
         }).join('');
 
-        document.getElementById('totalDepositos').textContent = fmtN(totalDep);
+        document.getElementById('totalDepositos').textContent    = fmtN(totalDep);
         document.getElementById('beneficioDepositos').textContent = fmtN(totalBenef);
-        document.getElementById('taePromedio').textContent = (sumPeso > 0 ? sumPond/sumPeso : 0).toFixed(2) + '%';
+        document.getElementById('taePromedio').textContent        = (sumPeso > 0 ? sumPond/sumPeso : 0).toFixed(2) + '%';
     }
 
-    // DASHBOARD
+    // ─── Dashboard ─────────────────────────────────────────────────────────────
     function renderDashboard() {
         let totalCartera = 0;
         fondos.forEach(f => totalCartera += valorFondo(f));
@@ -1124,13 +1160,13 @@
         const totalVar = varios.reduce((s, v) => s + v.importe, 0);
         const patrimonio = totalCartera + totalDep + totalVar;
 
-        document.getElementById('dashTotal').textContent = fmtN(patrimonio);
-        document.getElementById('dashCartera').textContent = fmtN(totalCartera);
-        document.getElementById('dashCarteraPerc').textContent = patrimonio > 0 ? (totalCartera/patrimonio*100).toFixed(1)+'% del total' : '0%';
-        document.getElementById('dashDepositos').textContent = fmtN(totalDep);
-        document.getElementById('dashDepositosPerc').textContent = patrimonio > 0 ? (totalDep/patrimonio*100).toFixed(1)+'% del total' : '0%';
-        document.getElementById('dashVarios').textContent = fmtN(totalVar);
-        document.getElementById('dashVariosPerc').textContent = patrimonio > 0 ? (totalVar/patrimonio*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('dashTotal').textContent          = fmtN(patrimonio);
+        document.getElementById('dashCartera').textContent        = fmtN(totalCartera);
+        document.getElementById('dashCarteraPerc').textContent    = patrimonio > 0 ? (totalCartera/patrimonio*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('dashDepositos').textContent      = fmtN(totalDep);
+        document.getElementById('dashDepositosPerc').textContent  = patrimonio > 0 ? (totalDep/patrimonio*100).toFixed(1)+'% del total' : '0%';
+        document.getElementById('dashVarios').textContent         = fmtN(totalVar);
+        document.getElementById('dashVariosPerc').textContent     = patrimonio > 0 ? (totalVar/patrimonio*100).toFixed(1)+'% del total' : '0%';
 
         let alertas = '';
         depositos.forEach(d => {
@@ -1154,7 +1190,7 @@
         renderHistorialDCA();
     }
 
-    // RENTABILIDAD
+    // ─── Rentabilidad ──────────────────────────────────────────────────────────
     const rentabilidades = [
         { id: 'fund1', nombre: 'iShares Developed World', rentAnual: 10.2 },
         { id: 'fund2', nombre: 'iShares Emerging Markets', rentAnual: 6.1 },
@@ -1171,10 +1207,10 @@
         let html = '';
         rentabilidades.forEach(r => {
             const fondo = fondos.find(f => f.id === r.id);
-            const val = fondo ? valorFondo(fondo) : 0;
-            const peso = totalCartera > 0 ? val / totalCartera : 0;
+            const val   = fondo ? valorFondo(fondo) : 0;
+            const peso  = totalCartera > 0 ? val / totalCartera : 0;
             rentPonderada += peso * r.rentAnual;
-            const partic = parseFloat(localStorage.getItem(r.id)) || 0;
+            const partic = parseFloat(lsGet(r.id)) || 0;
             html += `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
                     <div style="font-size:0.88em;">${r.nombre}
@@ -1198,26 +1234,26 @@
         el.innerHTML = html;
     }
 
-    // SNAPSHOTS / EVOLUCIÓN
+    // ─── Snapshots / Evolución ─────────────────────────────────────────────────
     function guardarSnapshotPatrimonio(patrimonio) {
         if (patrimonio === 0) return;
         const hoy = new Date().toISOString().split('T')[0];
         const idx = snapshots.findIndex(s => s.fecha === hoy);
         if (idx >= 0) { snapshots[idx].valor = patrimonio; }
         else { snapshots.push({ fecha: hoy, valor: patrimonio }); }
-        localStorage.setItem('snapshots', JSON.stringify(snapshots));
+        lsSet('snapshots', JSON.stringify(snapshots));
         guardarConDebounce();
     }
 
     function renderEvolucion() {
-        const canvas = document.getElementById('evolucionChart');
+        const canvas  = document.getElementById('evolucionChart');
         const emptyEl = document.getElementById('evolucionEmpty');
         if (snapshots.length < 2) {
-            canvas.style.display = 'none';
+            canvas.style.display  = 'none';
             emptyEl.style.display = 'block';
             return;
         }
-        canvas.style.display = 'block';
+        canvas.style.display  = 'block';
         emptyEl.style.display = 'none';
 
         const sorted = [...snapshots].sort((a, b) => a.fecha.localeCompare(b.fecha));
@@ -1230,7 +1266,7 @@
         const vals = sorted.map(s => s.valor);
         const minV = Math.min(...vals) * 0.97;
         const maxV = Math.max(...vals) * 1.03;
-        const pad = { top: 16, bottom: 28, left: 10, right: 10 };
+        const pad  = { top: 16, bottom: 28, left: 10, right: 10 };
 
         const xOf = i => pad.left + (i / (sorted.length - 1)) * (W - pad.left - pad.right);
         const yOf = v => pad.top + (1 - (v - minV) / (maxV - minV)) * (H - pad.top - pad.bottom);
@@ -1258,24 +1294,22 @@
             ctx.fill();
         });
 
-        ctx.fillStyle = '#6b7a99'; ctx.font = '10px DM Mono';
-        ctx.textAlign = 'left';
+        ctx.fillStyle = '#6b7a99'; ctx.font = '10px DM Mono'; ctx.textAlign = 'left';
         ctx.fillText(sorted[0].fecha, pad.left, H - 6);
         ctx.textAlign = 'right';
         ctx.fillText(sorted[sorted.length - 1].fecha, W - pad.right, H - 6);
-
-        ctx.fillStyle = '#4ade80'; ctx.font = 'bold 12px DM Mono'; ctx.textAlign = 'right';
+        ctx.fillStyle = '#4ade80'; ctx.font = 'bold 12px DM Mono';
         ctx.fillText(fmtN(vals[vals.length - 1]), W - pad.right, yOf(vals[vals.length - 1]) - 8);
     }
 
-    // HISTORIAL DCA
+    // ─── Historial DCA ─────────────────────────────────────────────────────────
     function registrarDCA(importe) {
         historialDCA.push({
             fecha: new Date().toISOString().split('T')[0],
-            hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            hora:  new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
             importe
         });
-        localStorage.setItem('historialDCA', JSON.stringify(historialDCA));
+        lsSet('historialDCA', JSON.stringify(historialDCA));
         guardarConDebounce();
     }
 
@@ -1285,7 +1319,7 @@
             el.innerHTML = '<p style="color:var(--muted);font-size:0.86em;">Aún no has aplicado ningún DCA.</p>';
             return;
         }
-        const sorted = [...historialDCA].reverse();
+        const sorted       = [...historialDCA].reverse();
         const totalAportado = historialDCA.reduce((s, h) => s + h.importe, 0);
         el.innerHTML = `
             <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
@@ -1297,19 +1331,19 @@
                     <div style="font-size:0.84em;color:var(--muted);">${h.fecha} <span style="font-size:0.85em">${h.hora}</span></div>
                     <div style="font-family:var(--mono);font-size:0.92em;color:var(--accent);">+${fmtN(h.importe)}</div>
                 </div>`).join('')}
-            ${historialDCA.length > 10 ? `<div style="font-size:0.78em;color:var(--muted);margin-top:10px;text-align:center;">Mostrando los últimos 10 de ${historialDCA.length} DCAs</div>` : ''}
-        `;
+            ${historialDCA.length > 10 ? `<div style="font-size:0.78em;color:var(--muted);margin-top:10px;text-align:center;">Mostrando los últimos 10 de ${historialDCA.length} DCAs</div>` : ''}`;
     }
 
+    // ─── Gráfico Pie ───────────────────────────────────────────────────────────
     function drawPie(cartera, deps, variosTotal) {
         const canvas = document.getElementById('pieChart');
-        const ctx = canvas.getContext('2d');
+        const ctx    = canvas.getContext('2d');
         ctx.clearRect(0, 0, 190, 190);
         const patrimonio = cartera + deps + (variosTotal || 0);
         const cx = 95, cy = 95, r = 75, rInner = 44;
         const colors = ['#4ade80', '#60a5fa', '#f59e0b'];
         const labels = ['Fondos', 'Depósitos', 'Varios'];
-        const vals = [cartera, deps, variosTotal || 0];
+        const vals   = [cartera, deps, variosTotal || 0];
         const valsPositivos = vals.map(v => Math.max(0, v));
         const totalPositivo = valsPositivos.reduce((s, v) => s + v, 0);
 
@@ -1347,7 +1381,7 @@
             </div>` : '').join('');
     }
 
-    // RENOVAR DEPÓSITO
+    // ─── Modal Renovar ─────────────────────────────────────────────────────────
     let renovarId = null;
 
     window.abrirRenovar = (id) => {
@@ -1355,10 +1389,10 @@
         if (!d) return;
         renovarId = id;
         document.getElementById('modalBancoNombre').textContent = d.banco;
-        document.getElementById('renCantidad').value = d.cantidad;
-        document.getElementById('renTAE').value = d.tae;
-        document.getElementById('renDuracion').value = d.duracion;
-        document.getElementById('renNotas').value = d.notas || '';
+        document.getElementById('renCantidad').value  = d.cantidad;
+        document.getElementById('renTAE').value       = d.tae;
+        document.getElementById('renDuracion').value  = d.duracion;
+        document.getElementById('renNotas').value     = d.notas || '';
         const nuevaFecha = new Date();
         nuevaFecha.setMonth(nuevaFecha.getMonth() + d.duracion);
         document.getElementById('renFecha').value = nuevaFecha.toISOString().split('T')[0];
@@ -1374,17 +1408,17 @@
         const d = depositos.find(d => d.id === renovarId);
         if (!d) return;
         d.cantidad = parseFloat(document.getElementById('renCantidad').value) || d.cantidad;
-        d.tae = parseFloat(document.getElementById('renTAE').value) || d.tae;
-        d.duracion = parseInt(document.getElementById('renDuracion').value) || d.duracion;
-        d.fecha = document.getElementById('renFecha').value || d.fecha;
-        d.notas = document.getElementById('renNotas').value;
+        d.tae      = parseFloat(document.getElementById('renTAE').value)      || d.tae;
+        d.duracion = parseInt(document.getElementById('renDuracion').value)   || d.duracion;
+        d.fecha    = document.getElementById('renFecha').value                || d.fecha;
+        d.notas    = document.getElementById('renNotas').value;
         guardarFirestore();
         cerrarModal();
         renderDepositos();
         renderDashboard();
     };
 
-    // VARIOS
+    // ─── Varios ────────────────────────────────────────────────────────────────
     const categoriaLabels = { cripto: 'Cripto', emergencia: 'Emergencia', aparcado: 'Aparcado', otro: 'Otro' };
     const categoriaColors = { cripto: '#f59e0b', emergencia: '#34d399', aparcado: '#f87171', otro: '#a78bfa' };
 
@@ -1398,11 +1432,11 @@
         if (anteriorNegativo !== ahoraNegativo) {
             renderVarios();
         } else {
-            const totalV = varios.reduce((s, v) => s + v.importe, 0);
+            const totalV        = varios.reduce((s, v) => s + v.importe, 0);
             const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
-            document.getElementById('totalVarios').textContent = fmtN(totalV);
+            document.getElementById('totalVarios').textContent   = fmtN(totalV);
             document.getElementById('totalAparcado').textContent = fmtN(totalAparcado);
-            document.getElementById('variosAlertas').innerHTML = totalAparcado > 0
+            document.getElementById('variosAlertas').innerHTML   = totalAparcado > 0
                 ? `<div class="alert alert-warn">⚡ Tienes ${fmtN(totalAparcado)} aparcados sin invertir. ¿Es el momento de hacer un DCA?</div>` : '';
         }
         renderDashboard();
@@ -1410,11 +1444,11 @@
 
     window.addVario = () => {
         const v = {
-            id: Date.now(),
-            nombre: document.getElementById('varNombre').value.trim(),
+            id:        Date.now(),
+            nombre:    document.getElementById('varNombre').value.trim(),
             categoria: document.getElementById('varCategoria').value,
-            importe: parseFloat(document.getElementById('varImporte').value),
-            notas: document.getElementById('varNotas').value.trim()
+            importe:   parseFloat(document.getElementById('varImporte').value),
+            notas:     document.getElementById('varNotas').value.trim()
         };
         if (!v.nombre || !v.importe) { alert('Completa nombre e importe'); return; }
         varios.push(v);
@@ -1434,10 +1468,10 @@
     };
 
     function renderVarios() {
-        const totalV = varios.reduce((s, v) => s + v.importe, 0);
+        const totalV        = varios.reduce((s, v) => s + v.importe, 0);
         const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
-        document.getElementById('totalVarios').textContent = fmtN(totalV);
-        document.getElementById('numVarios').textContent = varios.length;
+        document.getElementById('totalVarios').textContent   = fmtN(totalV);
+        document.getElementById('numVarios').textContent     = varios.length;
         document.getElementById('totalAparcado').textContent = fmtN(totalAparcado);
 
         document.getElementById('variosAlertas').innerHTML = totalAparcado > 0
@@ -1449,8 +1483,8 @@
             return;
         }
         container.innerHTML = varios.map(v => {
-            const color = categoriaColors[v.categoria] || '#a78bfa';
-            const label = categoriaLabels[v.categoria] || v.categoria;
+            const color  = categoriaColors[v.categoria] || '#a78bfa';
+            const label  = categoriaLabels[v.categoria] || v.categoria;
             const esDeuda = v.importe < 0;
             return `
                 <div style="display:grid;grid-template-columns:1fr 150px auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);">
@@ -1471,10 +1505,10 @@
         }).join('');
     }
 
-    // EXPORT / IMPORT
+    // ─── Export / Import ───────────────────────────────────────────────────────
     window.exportarDatos = () => {
         const datos = { fondos: {}, depositos, varios };
-        fondos.forEach(f => datos.fondos[f.id] = localStorage.getItem(f.id));
+        fondos.forEach(f => datos.fondos[f.id] = lsGet(f.id));
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }));
         a.download = `backup-dca-${new Date().toISOString().split('T')[0]}.json`;
@@ -1488,31 +1522,31 @@
             try {
                 const datos = JSON.parse(ev.target.result);
                 if (!confirm('¿Importar y sobrescribir los datos actuales?')) return;
-                if (datos.fondos) Object.entries(datos.fondos).forEach(([k,v]) => localStorage.setItem(k, v));
+                if (datos.fondos)    Object.entries(datos.fondos).forEach(([k,v]) => lsSet(k, v));
                 if (datos.depositos) depositos = datos.depositos;
-                if (datos.varios) varios = datos.varios;
+                if (datos.varios)    varios    = datos.varios;
                 guardarFirestore().then(() => location.reload());
             } catch { alert('Archivo no válido'); }
         };
         reader.readAsText(file);
     };
 
-    // UTILS
+    // ─── Utils ─────────────────────────────────────────────────────────────────
     function fmtN(n) {
         const val = (n === null || n === undefined) ? 0 : n;
         return val.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + '€';
     }
     function fmtShort(n) {
         if (n >= 1000000) return (n/1000000).toFixed(1) + 'M€';
-        if (n >= 1000) return Math.round(n/1000) + 'k€';
+        if (n >= 1000)    return Math.round(n/1000) + 'k€';
         return fmtN(n);
     }
 
-    // INIT
+    // ─── Init ──────────────────────────────────────────────────────────────────
     function inicializarApp() {
         cargarObjetivos();
         fondos.forEach(f => {
-            const v = localStorage.getItem(f.id);
+            const v = lsGet(f.id);
             if (v) document.getElementById(f.id).value = v;
         });
         fondos.forEach((f, i) => {
