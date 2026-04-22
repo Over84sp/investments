@@ -21,7 +21,7 @@
             --mono: 'DM Mono', monospace;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
         header {
             padding: 24px 40px;
@@ -44,7 +44,7 @@
         .tab:hover { color: var(--text); }
         .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        .tab-content { display: none; padding: 36px 40px; }
+        .tab-content { display: none; padding: 36px 40px; flex: 1; }
         .tab-content.active { display: block; }
 
         .cards {
@@ -82,7 +82,7 @@
         }
         .fondo-row:last-child { border-bottom: none; }
         .fondo-nombre { font-weight: 500; font-size: 0.92em; }
-        .fondo-isin { font-family: var(--mono); font-size: 0.7em; color: var(--muted); margin-top: 3px; }
+        .fondo-isin { font-family: var(--mono); font-size: 0.7em; color: var(--muted); margin-top: 3px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
         .fondo-badge {
             font-size: 0.68em; font-weight: 600; padding: 2px 8px; border-radius: 20px;
             background: rgba(74,222,128,0.1); color: var(--accent);
@@ -203,12 +203,12 @@
             display: block; font-size: 0.72em; text-transform: uppercase;
             letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; font-weight: 500;
         }
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%; background: var(--surface2); border: 1px solid var(--border);
             border-radius: 8px; padding: 9px 13px; color: var(--text);
             font-family: var(--font); font-size: 0.88em; transition: border-color 0.2s;
         }
-        .form-group input:focus { outline: none; border-color: var(--accent); }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
 
         .pie-container { display: flex; align-items: center; gap: 36px; flex-wrap: wrap; }
         .pie-legend { flex: 1; min-width: 180px; }
@@ -224,40 +224,27 @@
 
         .export-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        /* ── Version footer ── */
-        .version-footer {
-            text-align: center;
-            padding: 20px 40px 28px;
-            border-top: 1px solid var(--border);
-            margin-top: 8px;
+        .precio-manual-input {
+            width: 70px; background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 4px; padding: 2px 5px; color: var(--text); font-family: var(--mono);
+            font-size: 0.9em; text-align: right;
         }
-        .version-footer span {
-            font-family: var(--mono);
-            font-size: 0.7em;
-            color: var(--muted);
-            letter-spacing: 0.06em;
-        }
-        .version-footer .version-dot {
-            display: inline-block;
-            width: 6px; height: 6px;
-            background: var(--accent);
-            border-radius: 50%;
-            margin: 0 8px;
-            vertical-align: middle;
-            opacity: 0.6;
+        .precio-manual-input:focus { border-color: var(--warning); outline: none; }
+
+        footer {
+            text-align: center; padding: 24px 20px; font-size: 0.75em; color: var(--muted);
+            border-top: 1px solid var(--border); margin-top: auto; font-family: var(--mono);
         }
 
         @media (max-width: 680px) {
             header, .tabs, .tab-content { padding-left: 18px; padding-right: 18px; }
             .fondo-row { grid-template-columns: 1fr 130px; }
             .fondo-obj, .fondo-perc { display: none; }
-            .version-footer { padding-left: 18px; padding-right: 18px; }
         }
     </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
 <div id="loginScreen" style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--bg);">
     <div style="text-align:center;padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:20px;max-width:380px;width:90%;">
         <div style="width:52px;height:52px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px;">📈</div>
@@ -270,8 +257,7 @@
     </div>
 </div>
 
-<!-- APP -->
-<div id="appScreen" style="display:none;">
+<div id="appScreen" style="display:none; flex-direction:column; min-height:100vh;">
 
 <header>
     <div class="logo">📈</div>
@@ -292,7 +278,6 @@
     <div class="tab" onclick="showTab('varios', event)">Varios</div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="tab-dashboard" class="tab-content active">
     <div class="cards">
         <div class="card">
@@ -358,7 +343,6 @@
     </div>
 </div>
 
-<!-- CARTERA DCA -->
 <div id="tab-cartera" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -414,8 +398,10 @@
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">iShares Developed World <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06% · <span id="precioLabel0" style="color:var(--accent)">cargando…</span>
-                    <button onclick="window.recargarPrecioFondo(0)" title="Recargar precio" style="margin-left:6px;padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
+                <div class="fondo-isin">IE000ZYRH0Q7 · TER 0.06% · 
+                    <span id="precioLabel0" style="color:var(--accent)">cargando…</span>
+                    <input type="number" id="manualInput0" step="0.0001" class="precio-manual-input" placeholder="Manual" title="Introduce precio a mano si falla" oninput="guardarPrecioManual(0, this.value)">
+                    <button onclick="window.recargarPrecioFondo(0)" title="Recargar precio" style="padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
                 </div>
             </div>
             <div class="fondo-obj">
@@ -431,8 +417,10 @@
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">iShares Emerging Markets <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20% · <span id="precioLabel1" style="color:var(--accent)">cargando…</span>
-                    <button onclick="window.recargarPrecioFondo(1)" title="Recargar precio" style="margin-left:6px;padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
+                <div class="fondo-isin">IE00BYWYCC39 · TER 0.20% · 
+                    <span id="precioLabel1" style="color:var(--accent)">cargando…</span>
+                    <input type="number" id="manualInput1" step="0.0001" class="precio-manual-input" placeholder="Manual" title="Introduce precio a mano si falla" oninput="guardarPrecioManual(1, this.value)">
+                    <button onclick="window.recargarPrecioFondo(1)" title="Recargar precio" style="padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
                 </div>
             </div>
             <div class="fondo-obj">
@@ -448,8 +436,10 @@
         <div class="fondo-row">
             <div>
                 <div class="fondo-nombre">Vanguard Global Small-Cap <span class="fondo-badge">RV</span></div>
-                <div class="fondo-isin">IE00B42W4L06 · TER 0.29% · <span id="precioLabel2" style="color:var(--accent)">cargando…</span>
-                    <button onclick="window.recargarPrecioFondo(2)" title="Recargar precio" style="margin-left:6px;padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
+                <div class="fondo-isin">IE00B42W4L06 · TER 0.29% · 
+                    <span id="precioLabel2" style="color:var(--accent)">cargando…</span>
+                    <input type="number" id="manualInput2" step="0.0001" class="precio-manual-input" placeholder="Manual" title="Introduce precio a mano si falla" oninput="guardarPrecioManual(2, this.value)">
+                    <button onclick="window.recargarPrecioFondo(2)" title="Recargar precio" style="padding:1px 5px;font-size:0.7em;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">↻</button>
                 </div>
             </div>
             <div class="fondo-obj">
@@ -479,7 +469,6 @@
     </div>
 </div>
 
-<!-- DEPÓSITOS -->
 <div id="tab-depositos" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -531,7 +520,6 @@
     </div>
 </div>
 
-<!-- MODAL RENOVAR -->
 <div id="modalRenovar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:480px;width:90%;position:relative;">
         <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;font-weight:500;">Renovar Depósito</div>
@@ -550,7 +538,6 @@
     </div>
 </div>
 
-<!-- VARIOS -->
 <div id="tab-varios" class="tab-content">
     <div class="cards">
         <div class="card">
@@ -576,7 +563,7 @@
             <div class="form-group"><label>Nombre / Descripción</label><input type="text" id="varNombre" placeholder="Ej: ETF Bitcoin, Fondo Emergencia"></div>
             <div class="form-group">
                 <label>Categoría</label>
-                <select id="varCategoria" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:var(--font);font-size:0.88em;">
+                <select id="varCategoria">
                     <option value="cripto">Cripto</option>
                     <option value="emergencia">Fondo de Emergencia</option>
                     <option value="aparcado">Aparcado (pendiente invertir)</option>
@@ -595,14 +582,9 @@
     </div>
 </div>
 
-<!-- VERSION FOOTER -->
-<div class="version-footer">
-    <span>Gestor DCA</span>
-    <span class="version-dot"></span>
-    <span>Commit: <strong style="color:var(--text);">2025-07-11 · 14:32 UTC</strong></span>
-    <span class="version-dot"></span>
-    <span>v1.2.0 · Yahoo Finance API</span>
-</div>
+<footer>
+    Gestor DCA v1.2 — Modificado por última vez: 22 de abril de 2026, 21:50 (Madrid)
+</footer>
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -663,10 +645,12 @@
             if (userId && userId !== user.uid) {
                 resetearEstadoMemoria();
             }
+
             userId = user.uid;
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display  = 'block';
+            document.getElementById('appScreen').style.display  = 'flex';
             document.getElementById('userEmail').textContent = user.email;
+
             await cargarDatosFirestore();
             inicializarApp();
         } else {
@@ -683,9 +667,10 @@
         snapshots   = [];
         historialDCA = [];
         fondos.forEach(f => {
-            f.precio      = null;
-            f.fechaPrecio = null;
-            f.objetivo    = [75, 13, 12][fondos.indexOf(f)];
+            f.precio       = null;
+            f.fechaPrecio  = null;
+            f.precioManual = null;
+            f.objetivo     = [75, 13, 12][fondos.indexOf(f)];
         });
     }
 
@@ -699,11 +684,15 @@
                 varios       = data.varios       || [];
                 snapshots    = data.snapshots    || JSON.parse(lsGet('snapshots')    || '[]');
                 historialDCA = data.historialDCA || JSON.parse(lsGet('historialDCA') || '[]');
+
                 if (data.fondos) {
                     Object.entries(data.fondos).forEach(([k, v]) => lsSet(k, v));
                 }
                 if (data.objetivos) {
                     Object.entries(data.objetivos).forEach(([k, v]) => lsSet('obj_' + k, v));
+                }
+                if (data.preciosManuales) {
+                    Object.entries(data.preciosManuales).forEach(([k, v]) => lsSet('pm_' + k, v));
                 }
             } else {
                 depositos    = [];
@@ -718,16 +707,21 @@
 
     async function guardarFirestore() {
         if (!userId) return;
-        const fondosData    = {};
-        const objetivosData = {};
+        const fondosData          = {};
+        const objetivosData       = {};
+        const preciosManualesData = {};
+
         fondos.forEach(f => {
-            fondosData[f.id]    = lsGet(f.id) || '0';
-            objetivosData[f.id] = f.objetivo;
+            fondosData[f.id]          = lsGet(f.id) || '0';
+            objetivosData[f.id]       = f.objetivo;
+            preciosManualesData[f.id] = f.precioManual;
         });
+
         try {
             await setDoc(doc(db, 'usuarios', userId), {
                 fondos: fondosData,
                 objetivos: objetivosData,
+                preciosManuales: preciosManualesData,
                 depositos,
                 varios,
                 snapshots,
@@ -745,76 +739,80 @@
     }
 
     // ─── Fondos ────────────────────────────────────────────────────────────────
-    // ticker: símbolo de Yahoo Finance para cada fondo
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', ticker: '0P0000XR9M.F', precio: null, fechaPrecio: null },
-        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  ticker: '0P0001XF40.F', precio: null, fechaPrecio: null },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  ticker: '0P0001AINL.F', precio: null, fechaPrecio: null },
+        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null, precioManual: null },
+        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null, precioManual: null },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null, precioManual: null },
     ];
 
-    // ─── Precios Yahoo Finance ─────────────────────────────────────────────────
-    // Usa la Query2 API de Yahoo Finance a través de proxies CORS.
-    // Endpoint: https://query2.finance.yahoo.com/v8/finance/chart/{ticker}
-    // Devuelve el campo "regularMarketPrice" en EUR (los tickers .F cotizan en EUR en Xetra).
-    async function fetchPrecioFondo(fondo) {
-        const yahooUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(fondo.ticker)}?interval=1d&range=1d`;
+    // Helper para decidir qué precio usar (el automático gana al manual)
+    function getPrecio(f) {
+        if (f.precio !== null) return f.precio;
+        if (f.precioManual !== null && !isNaN(f.precioManual)) return parseFloat(f.precioManual);
+        return 0;
+    }
 
-        // Lista de proxies CORS por orden de preferencia
+    // ─── Precios ───────────────────────────────────────────────────────────────
+    async function fetchPrecioFondo(fondo) {
         const proxies = [
             (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
             (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
             (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
         ];
+        const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
 
         for (let i = 0; i < proxies.length; i++) {
             try {
-                const res = await fetch(proxies[i](yahooUrl), {
-                    headers: { 'Accept': 'application/json' }
-                });
+                const res = await fetch(proxies[i](url));
                 if (!res.ok) continue;
-
-                const json = await res.json();
-
-                // Navegar la estructura de respuesta de Yahoo Finance v8
-                const meta = json?.chart?.result?.[0]?.meta;
-                if (!meta) continue;
-
-                // Preferimos regularMarketPrice; si no está disponible, tomamos previousClose
-                const precio = meta.regularMarketPrice ?? meta.previousClose ?? null;
-
-                if (precio && !isNaN(precio) && precio > 0) {
-                    fondo.precio = precio;
-                    // La fecha viene en UNIX timestamp en meta.regularMarketTime
-                    if (meta.regularMarketTime) {
-                        const d = new Date(meta.regularMarketTime * 1000);
-                        fondo.fechaPrecio = d.toISOString().split('T')[0];
-                    } else {
+                const html = await res.text();
+                const parser = new DOMParser();
+                const docParsed = parser.parseFromString(html, 'text/html');
+                const priceElements = docParsed.querySelectorAll('.mod-ui-data-list__value');
+                if (priceElements && priceElements.length > 0) {
+                    let precioTexto = priceElements[0].textContent.trim().replace(/,/g, '');
+                    const precio = parseFloat(precioTexto);
+                    if (!isNaN(precio) && precio > 0) {
+                        fondo.precio = precio;
                         fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                        return true;
                     }
-                    return true;
                 }
-            } catch(e) {
-                // Proxy falló, intentar el siguiente
-                continue;
-            }
+            } catch(e) { continue; }
         }
-
-        // Último recurso: intentar sin proxy (puede fallar por CORS en navegador)
-        try {
-            const res = await fetch(yahooUrl);
-            if (res.ok) {
-                const json = await res.json();
-                const meta = json?.chart?.result?.[0]?.meta;
-                const precio = meta?.regularMarketPrice ?? meta?.previousClose ?? null;
-                if (precio && !isNaN(precio) && precio > 0) {
-                    fondo.precio = precio;
-                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                    return true;
-                }
-            }
-        } catch(e) { /* ignorar */ }
-
         return false;
+    }
+
+    function actualizarUIPrecios() {
+        fondos.forEach((f, i) => {
+            const labelCard = document.getElementById('precio' + ['F1','F2','F3'][i]);
+            const labelRow  = document.getElementById('precioLabel' + i);
+            const inputMan  = document.getElementById('manualInput' + i);
+
+            // Poblar el input manual con su estado persistido
+            if (inputMan && f.precioManual !== null && inputMan.value === '') {
+                inputMan.value = f.precioManual;
+            }
+
+            const manualVal = parseFloat(f.precioManual);
+            const hasManual = !isNaN(manualVal);
+
+            if (f.precio !== null) {
+                const txt   = `${f.precio.toFixed(4)}€`;
+                const fecha = f.fechaPrecio ? ` (${f.fechaPrecio})` : '';
+                if (labelCard) labelCard.textContent = txt + '/p.';
+                if (labelRow)  { labelRow.textContent = txt + fecha + ' (Auto)'; labelRow.style.color = 'var(--accent)'; }
+            } else if (hasManual) {
+                const txt   = `${manualVal.toFixed(4)}€`;
+                if (labelCard) labelCard.textContent = txt + '/p.';
+                if (labelRow)  { labelRow.textContent = txt + ' (Manual)'; labelRow.style.color = 'var(--warning)'; }
+            } else {
+                if (labelCard) labelCard.textContent = 'precio n/d';
+                if (labelRow)  { labelRow.textContent = 'error / sin valor'; labelRow.style.color = 'var(--danger)'; }
+            }
+        });
+        calcular();
+        renderDashboard();
     }
 
     async function cargarPrecios() {
@@ -824,68 +822,52 @@
         const resultados = await Promise.all(fondos.map(fetchPrecioFondo));
         const ok = resultados.filter(Boolean).length;
 
-        fondos.forEach((f, i) => {
-            const labelCard = document.getElementById('precio' + ['F1','F2','F3'][i]);
-            const labelRow  = document.getElementById('precioLabel' + i);
-            if (f.precio !== null) {
-                const txt   = `${f.precio.toFixed(4)}€/part.`;
-                const fecha = f.fechaPrecio ? ` (${f.fechaPrecio})` : '';
-                if (labelCard) labelCard.textContent = txt;
-                if (labelRow)  { labelRow.textContent = txt + fecha; labelRow.style.color = 'var(--accent)'; }
-            } else {
-                if (labelCard) labelCard.textContent = 'precio n/d';
-                if (labelRow)  { labelRow.textContent = 'error — pulsa ↻'; labelRow.style.color = 'var(--warning)'; }
-            }
-        });
+        actualizarUIPrecios();
 
         if (statusEl) {
             if (ok === fondos.length) {
-                statusEl.textContent = `✓ Precios actualizados · ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})}`;
+                statusEl.textContent = `✓ Precios auto-actualizados · ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})}`;
                 statusEl.style.color = 'var(--accent)';
             } else {
-                statusEl.textContent = `⚠ ${ok}/${fondos.length} precios cargados`;
+                statusEl.textContent = `⚠ ${ok}/${fondos.length} precios auto-cargados (usando manuales si aplica)`;
                 statusEl.style.color = 'var(--warning)';
             }
         }
-        calcular();
-        renderDashboard();
     }
 
     async function recargarPrecioFondo(index) {
-        const fondo    = fondos[index];
-        const labelRow  = document.getElementById('precioLabel' + index);
-        const labelCard = document.getElementById('precio' + ['F1','F2','F3'][index]);
-        if (labelRow) { labelRow.textContent = 'recargando…'; labelRow.style.color = 'var(--muted)'; }
-        const exito = await fetchPrecioFondo(fondo);
-        if (exito && fondo.precio !== null) {
-            const txt   = `${fondo.precio.toFixed(4)}€/part.`;
-            const fecha = fondo.fechaPrecio ? ` (${fondo.fechaPrecio})` : '';
-            if (labelCard) labelCard.textContent = txt;
-            if (labelRow)  { labelRow.textContent = txt + fecha; labelRow.style.color = 'var(--accent)'; }
-        } else {
-            if (labelCard) labelCard.textContent = 'error';
-            if (labelRow)  { labelRow.textContent = 'error — prueba de nuevo'; labelRow.style.color = 'var(--danger)'; }
-        }
-        calcular();
-        renderDashboard();
+        const fondo = fondos[index];
+        const labelRow = document.getElementById('precioLabel' + index);
+        if (labelRow) labelRow.textContent = 'recargando…';
+        await fetchPrecioFondo(fondo);
+        actualizarUIPrecios();
     }
 
     window.cargarPrecios       = cargarPrecios;
     window.recargarPrecioFondo = recargarPrecioFondo;
 
-    // ─── Objetivos ─────────────────────────────────────────────────────────────
-    function cargarObjetivos() {
+    window.guardarPrecioManual = (idx, val) => {
+        const v = parseFloat(val);
+        fondos[idx].precioManual = isNaN(v) ? null : v;
+        lsSet('pm_' + fondos[idx].id, fondos[idx].precioManual);
+        actualizarUIPrecios();
+        guardarConDebounce();
+    };
+
+    // ─── Configuracion ─────────────────────────────────────────────────────────
+    function cargarConfiguracionLocal() {
         fondos.forEach(f => {
-            const saved = lsGet('obj_' + f.id);
-            if (saved !== null) f.objetivo = parseFloat(saved);
+            const savedObj = lsGet('obj_' + f.id);
+            if (savedObj !== null) f.objetivo = parseFloat(savedObj);
+
+            const savedPm = lsGet('pm_' + f.id);
+            if (savedPm !== null) f.precioManual = parseFloat(savedPm);
         });
     }
 
-    // ─── Valor de un fondo en € ────────────────────────────────────────────────
     function valorFondo(f) {
         const partic = parseFloat(lsGet(f.id)) || 0;
-        const precio = f.precio || 0;
-        return partic * precio;
+        return partic * getPrecio(f);
     }
 
     // ─── Estado global ─────────────────────────────────────────────────────────
@@ -906,7 +888,6 @@
         if (name === 'varios')    renderVarios();
     };
 
-    // ─── Guardar fondo ─────────────────────────────────────────────────────────
     window.guardarFondo = (id) => {
         lsSet(id, document.getElementById(id).value);
         guardarConDebounce();
@@ -932,7 +913,8 @@
         fondos.forEach((f, i) => {
             const perc = total > 0 ? (vals[i]/total*100).toFixed(1)+'%' : '0%';
             const el = document.getElementById(percLabels[i]);
-            if (el) el.innerHTML = `${perc} · <span id="${precioIds[i]}" style="font-family:var(--mono)">${f.precio !== null ? f.precio.toFixed(4)+'€' : '—'}</span>`;
+            const pValue = getPrecio(f);
+            if (el) el.innerHTML = `${perc} · <span id="${precioIds[i]}" style="font-family:var(--mono)">${pValue > 0 ? pValue.toFixed(4)+'€' : '—'}</span>`;
         });
 
         const p1 = total > 0 ? vals[0]/total*100 : 0;
@@ -1002,9 +984,9 @@
             document.getElementById('dcaResult').innerHTML = `<div class="alert alert-danger" style="margin-top:14px">⚠ Los objetivos no suman 100% (${suma.toFixed(1)}%). Corrígelos antes de calcular.</div>`;
             return;
         }
-        const sinPrecio = fondos.filter(f => !f.precio);
+        const sinPrecio = fondos.filter(f => getPrecio(f) === 0);
         if (sinPrecio.length > 0) {
-            document.getElementById('dcaResult').innerHTML = `<div class="alert alert-warn" style="margin-top:14px">⏳ Esperando precios de: ${sinPrecio.map(f=>f.nombre).join(', ')}. Reintenta en unos segundos.</div>`;
+            document.getElementById('dcaResult').innerHTML = `<div class="alert alert-warn" style="margin-top:14px">⏳ Faltan precios para: ${sinPrecio.map(f=>f.nombre).join(', ')}. Recarga o usa los inputs manuales.</div>`;
             return;
         }
 
@@ -1029,11 +1011,12 @@
 
         let html = '<div class="dca-result">';
         fondos.forEach((f, i) => {
+            const pFondo        = getPrecio(f);
             const eurAportar    = aportacionesEur[i];
-            const partNuevas    = eurAportar / f.precio;
+            const partNuevas    = eurAportar / pFondo;
             const partActuales  = parseFloat(lsGet(f.id)) || 0;
             const partNuevoTotal = partActuales + partNuevas;
-            const eurNuevoTotal = partNuevoTotal * f.precio;
+            const eurNuevoTotal = partNuevoTotal * pFondo;
             const pFut  = totalFutEur > 0 ? (eurNuevoTotal/totalFutEur*100).toFixed(1) : 0;
             const desv  = (parseFloat(pFut) - f.objetivo).toFixed(1);
             const desvColor = Math.abs(parseFloat(desv)) < 0.5 ? 'var(--accent)' : Math.abs(parseFloat(desv)) < 2 ? 'var(--warning)' : 'var(--danger)';
@@ -1042,7 +1025,7 @@
                     <div>
                         <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
                         <div class="dca-nuevo">
-                            +${partNuevas.toFixed(4)} part. · <span style="color:var(--accent2)">@${f.precio.toFixed(4)}€</span><br>
+                            +${partNuevas.toFixed(4)} part. · <span style="color:var(--accent2)">@${pFondo.toFixed(4)}€</span><br>
                             → Total: ${partNuevoTotal.toFixed(4)} part. = ${fmtN(eurNuevoTotal)}
                             <span style="color:var(--accent2)">(${pFut}%)</span>
                             <span style="color:${desvColor};font-size:0.85em"> ${parseFloat(desv)>=0?'+':''}${desv}pp vs obj. ${f.objetivo}%</span>
@@ -1086,13 +1069,14 @@
     window.aplicarDCA = () => {
         const dca = parseFloat(document.getElementById('dcaAmount').value);
         if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
-        const sinPrecio = fondos.filter(f => !f.precio);
+        const sinPrecio = fondos.filter(f => getPrecio(f) === 0);
         if (sinPrecio.length > 0) { alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', ')); return; }
         if (!confirm('¿Aplicar este DCA y actualizar las participaciones?')) return;
 
         const aportacionesEur = calcularAportacionesEquilibradas(dca);
         fondos.forEach((f, i) => {
-            const partNuevas     = aportacionesEur[i] / f.precio;
+            const pFondo         = getPrecio(f);
+            const partNuevas     = aportacionesEur[i] / pFondo;
             const partActuales   = parseFloat(document.getElementById(f.id).value) || 0;
             const partNuevoTotal = partActuales + partNuevas;
             document.getElementById(f.id).value = partNuevoTotal.toFixed(6);
@@ -1565,8 +1549,11 @@
 
     // ─── Export / Import ───────────────────────────────────────────────────────
     window.exportarDatos = () => {
-        const datos = { fondos: {}, depositos, varios };
-        fondos.forEach(f => datos.fondos[f.id] = lsGet(f.id));
+        const datos = { fondos: {}, depositos, varios, preciosManuales: {} };
+        fondos.forEach(f => {
+            datos.fondos[f.id] = lsGet(f.id);
+            datos.preciosManuales[f.id] = f.precioManual;
+        });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }));
         a.download = `backup-dca-${new Date().toISOString().split('T')[0]}.json`;
@@ -1580,9 +1567,10 @@
             try {
                 const datos = JSON.parse(ev.target.result);
                 if (!confirm('¿Importar y sobrescribir los datos actuales?')) return;
-                if (datos.fondos)    Object.entries(datos.fondos).forEach(([k,v]) => lsSet(k, v));
-                if (datos.depositos) depositos = datos.depositos;
-                if (datos.varios)    varios    = datos.varios;
+                if (datos.fondos)          Object.entries(datos.fondos).forEach(([k,v]) => lsSet(k, v));
+                if (datos.preciosManuales) Object.entries(datos.preciosManuales).forEach(([k,v]) => lsSet('pm_'+k, v));
+                if (datos.depositos)       depositos = datos.depositos;
+                if (datos.varios)          varios    = datos.varios;
                 guardarFirestore().then(() => location.reload());
             } catch { alert('Archivo no válido'); }
         };
@@ -1602,7 +1590,7 @@
 
     // ─── Init ──────────────────────────────────────────────────────────────────
     function inicializarApp() {
-        cargarObjetivos();
+        cargarConfiguracionLocal();
         fondos.forEach(f => {
             const v = lsGet(f.id);
             if (v) document.getElementById(f.id).value = v;
@@ -1619,6 +1607,5 @@
         cargarPrecios();
     }
 </script>
-</div>
 </body>
 </html>
