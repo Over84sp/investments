@@ -224,10 +224,34 @@
 
         .export-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
+        /* ── Version footer ── */
+        .version-footer {
+            text-align: center;
+            padding: 20px 40px 28px;
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+        .version-footer span {
+            font-family: var(--mono);
+            font-size: 0.7em;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+        }
+        .version-footer .version-dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin: 0 8px;
+            vertical-align: middle;
+            opacity: 0.6;
+        }
+
         @media (max-width: 680px) {
             header, .tabs, .tab-content { padding-left: 18px; padding-right: 18px; }
             .fondo-row { grid-template-columns: 1fr 130px; }
             .fondo-obj, .fondo-perc { display: none; }
+            .version-footer { padding-left: 18px; padding-right: 18px; }
         }
     </style>
 </head>
@@ -571,6 +595,15 @@
     </div>
 </div>
 
+<!-- VERSION FOOTER -->
+<div class="version-footer">
+    <span>Gestor DCA</span>
+    <span class="version-dot"></span>
+    <span>Commit: <strong style="color:var(--text);">2025-07-11 · 14:32 UTC</strong></span>
+    <span class="version-dot"></span>
+    <span>v1.2.0 · Yahoo Finance API</span>
+</div>
+
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -595,8 +628,6 @@
     let guardadoPendiente = null;
 
     // ─── localStorage con prefijo de usuario ───────────────────────────────────
-    // Todas las lecturas/escrituras pasan por aquí, así cada cuenta
-    // tiene su propio espacio y nunca se mezclan los datos.
     function lsGet(key) {
         if (!userId) return null;
         return localStorage.getItem(`${userId}__${key}`);
@@ -610,7 +641,6 @@
         localStorage.removeItem(`${userId}__${key}`);
     }
 
-    // Borra SOLO las claves de este usuario (no toca las de otros usuarios)
     function limpiarStorageUsuario(uid) {
         const prefix = `${uid}__`;
         Object.keys(localStorage)
@@ -630,16 +660,13 @@
 
     onAuthStateChanged(auth, async user => {
         if (user) {
-            // Si había otro usuario logueado antes, reseteamos el estado en memoria
             if (userId && userId !== user.uid) {
                 resetearEstadoMemoria();
             }
-
             userId = user.uid;
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appScreen').style.display  = 'block';
             document.getElementById('userEmail').textContent = user.email;
-
             await cargarDatosFirestore();
             inicializarApp();
         } else {
@@ -650,7 +677,6 @@
         }
     });
 
-    // Limpia las variables en memoria al cambiar de usuario
     function resetearEstadoMemoria() {
         depositos   = [];
         varios      = [];
@@ -659,7 +685,7 @@
         fondos.forEach(f => {
             f.precio      = null;
             f.fechaPrecio = null;
-            f.objetivo    = [75, 13, 12][fondos.indexOf(f)]; // valores por defecto
+            f.objetivo    = [75, 13, 12][fondos.indexOf(f)];
         });
     }
 
@@ -673,8 +699,6 @@
                 varios       = data.varios       || [];
                 snapshots    = data.snapshots    || JSON.parse(lsGet('snapshots')    || '[]');
                 historialDCA = data.historialDCA || JSON.parse(lsGet('historialDCA') || '[]');
-
-                // Volcamos fondos y objetivos al localStorage de ESTE usuario
                 if (data.fondos) {
                     Object.entries(data.fondos).forEach(([k, v]) => lsSet(k, v));
                 }
@@ -682,7 +706,6 @@
                     Object.entries(data.objetivos).forEach(([k, v]) => lsSet('obj_' + k, v));
                 }
             } else {
-                // Usuario nuevo: arrancamos desde cero (sin herencia de localStorage)
                 depositos    = [];
                 varios       = [];
                 snapshots    = [];
@@ -722,42 +745,77 @@
     }
 
     // ─── Fondos ────────────────────────────────────────────────────────────────
+    // ticker: símbolo de Yahoo Finance para cada fondo
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World', objetivo: 80, isin: 'IE000ZYRH0Q7', ticker: '0P0001XF40.F', precio: null },
-        { id: 'fund2', nombre: 'iShares Emerging Markets', objetivo: 10, isin: 'IE00BYWYCC39', ticker: '0P0001AINL.F', precio: null },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 10, isin: 'IE00B42W4L06', ticker: '0P0000XR9M.F', precio: null },
-];
-
-async function fetchPrecioFondo(fondo) {
-    if (!fondo.ticker) return false;
-    
-    const proxies = [
-        (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', ticker: '0P0000XR9M.F', precio: null, fechaPrecio: null },
+        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  ticker: '0P0001XF40.F', precio: null, fechaPrecio: null },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  ticker: '0P0001AINL.F', precio: null, fechaPrecio: null },
     ];
 
-    // Llamamos a la API JSON directa de Yahoo Finance
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${fondo.ticker}?region=ES&lang=es-ES`;
+    // ─── Precios Yahoo Finance ─────────────────────────────────────────────────
+    // Usa la Query2 API de Yahoo Finance a través de proxies CORS.
+    // Endpoint: https://query2.finance.yahoo.com/v8/finance/chart/{ticker}
+    // Devuelve el campo "regularMarketPrice" en EUR (los tickers .F cotizan en EUR en Xetra).
+    async function fetchPrecioFondo(fondo) {
+        const yahooUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(fondo.ticker)}?interval=1d&range=1d`;
 
-    for (let proxy of proxies) {
-        try {
-            const res = await fetch(proxy(url));
-            if (!res.ok) continue;
-            
-            const data = await res.json();
-            
-            // Navegamos por el JSON hasta el precio
-            const price = data.chart.result[0].meta.regularMarketPrice;
-            
-            if (price) {
-                fondo.precio = price;
-                fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                return true;
+        // Lista de proxies CORS por orden de preferencia
+        const proxies = [
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        ];
+
+        for (let i = 0; i < proxies.length; i++) {
+            try {
+                const res = await fetch(proxies[i](yahooUrl), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) continue;
+
+                const json = await res.json();
+
+                // Navegar la estructura de respuesta de Yahoo Finance v8
+                const meta = json?.chart?.result?.[0]?.meta;
+                if (!meta) continue;
+
+                // Preferimos regularMarketPrice; si no está disponible, tomamos previousClose
+                const precio = meta.regularMarketPrice ?? meta.previousClose ?? null;
+
+                if (precio && !isNaN(precio) && precio > 0) {
+                    fondo.precio = precio;
+                    // La fecha viene en UNIX timestamp en meta.regularMarketTime
+                    if (meta.regularMarketTime) {
+                        const d = new Date(meta.regularMarketTime * 1000);
+                        fondo.fechaPrecio = d.toISOString().split('T')[0];
+                    } else {
+                        fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                    }
+                    return true;
+                }
+            } catch(e) {
+                // Proxy falló, intentar el siguiente
+                continue;
             }
-        } catch(e) { continue; }
+        }
+
+        // Último recurso: intentar sin proxy (puede fallar por CORS en navegador)
+        try {
+            const res = await fetch(yahooUrl);
+            if (res.ok) {
+                const json = await res.json();
+                const meta = json?.chart?.result?.[0]?.meta;
+                const precio = meta?.regularMarketPrice ?? meta?.previousClose ?? null;
+                if (precio && !isNaN(precio) && precio > 0) {
+                    fondo.precio = precio;
+                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                    return true;
+                }
+            }
+        } catch(e) { /* ignorar */ }
+
+        return false;
     }
-    return false;
-}
 
     async function cargarPrecios() {
         const statusEl = document.getElementById('preciosStatus');
@@ -797,7 +855,7 @@ async function fetchPrecioFondo(fondo) {
         const fondo    = fondos[index];
         const labelRow  = document.getElementById('precioLabel' + index);
         const labelCard = document.getElementById('precio' + ['F1','F2','F3'][index]);
-        if (labelRow) labelRow.textContent = 'recargando…';
+        if (labelRow) { labelRow.textContent = 'recargando…'; labelRow.style.color = 'var(--muted)'; }
         const exito = await fetchPrecioFondo(fondo);
         if (exito && fondo.precio !== null) {
             const txt   = `${fondo.precio.toFixed(4)}€/part.`;
@@ -848,7 +906,7 @@ async function fetchPrecioFondo(fondo) {
         if (name === 'varios')    renderVarios();
     };
 
-    // ─── Guardar fondo (usa lsSet con prefijo) ─────────────────────────────────
+    // ─── Guardar fondo ─────────────────────────────────────────────────────────
     window.guardarFondo = (id) => {
         lsSet(id, document.getElementById(id).value);
         guardarConDebounce();
