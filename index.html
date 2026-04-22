@@ -728,36 +728,46 @@
         { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
     ];
 
-    // ─── Precios Financial Times ───────────────────────────────────────────────
-    async function fetchPrecioFondo(fondo) {
-        const proxies = [
-            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-            (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-        ];
-        const url = `https://markets.ft.com/data/funds/tearsheet/summary?s=${fondo.isin}:EUR`;
+async function fetchPrecioFondo(fondo) {
+    const proxies = [
+        (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    ];
+    
+    // Cambiamos la fuente a QueFondos, que usa el ISIN en la URL directamente
+    const url = `https://www.quefondos.com/es/fondos/ficha/index.html?isin=${fondo.isin}`;
 
-        for (let i = 0; i < proxies.length; i++) {
-            try {
-                const res = await fetch(proxies[i](url));
-                if (!res.ok) continue;
-                const html = await res.text();
-                const parser = new DOMParser();
-                const docParsed = parser.parseFromString(html, 'text/html');
-                const priceElements = docParsed.querySelectorAll('.mod-ui-data-list__value');
-                if (priceElements && priceElements.length > 0) {
-                    let precioTexto = priceElements[0].textContent.trim().replace(/,/g, '');
-                    const precio = parseFloat(precioTexto);
-                    if (!isNaN(precio) && precio > 0) {
-                        fondo.precio = precio;
-                        fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                        return true;
-                    }
+    for (let i = 0; i < proxies.length; i++) {
+        try {
+            const res = await fetch(proxies[i](url));
+            if (!res.ok) continue;
+            const html = await res.text();
+
+            // Usamos una expresión regular para buscar el valor liquidativo.
+            // Busca la palabra "Liquidativo", ignora el HTML de por medio, y captura el número y la fecha.
+            // Ejemplo de lo que captura: "123,45" o "1.234,56"
+            const regexPrecio = /Liquidativo[^>]*>.*?([\d.,]+)\s*EUR/i;
+            const match = html.match(regexPrecio);
+
+            if (match && match[1]) {
+                // Limpiamos el formato español (1.234,56 -> 1234.56)
+                let precioTexto = match[1].replace(/\./g, '').replace(',', '.');
+                const precio = parseFloat(precioTexto);
+
+                if (!isNaN(precio) && precio > 0) {
+                    fondo.precio = precio;
+                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                    return true;
                 }
-            } catch(e) { continue; }
+            }
+        } catch(e) { 
+            // Falla silenciosamente y prueba el siguiente proxy
+            continue; 
         }
-        return false;
     }
+    return false; // Si llegamos aquí, fallaron todos los proxies
+}
 
     async function cargarPrecios() {
         const statusEl = document.getElementById('preciosStatus');
