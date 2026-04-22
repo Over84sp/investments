@@ -723,50 +723,40 @@
 
     // ─── Fondos ────────────────────────────────────────────────────────────────
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null },
-        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null },
-    ];
+        { id: 'fund1', nombre: 'iShares Developed World', objetivo: 80, isin: 'IE000ZYRH0Q7', ticker: '0P0001XF40.F', precio: null },
+        { id: 'fund2', nombre: 'iShares Emerging Markets', objetivo: 10, isin: 'IE00BYWYCC39', ticker: '0P0001AINL.F', precio: null },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 10, isin: 'IE00B42W4L06', ticker: '0P0000XR9M.F', precio: null },
+];
 
 async function fetchPrecioFondo(fondo) {
+    if (!fondo.ticker) return false;
+    
     const proxies = [
         (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
     ];
-    
-    // Cambiamos la fuente a QueFondos, que usa el ISIN en la URL directamente
-    const url = `https://www.quefondos.com/es/fondos/ficha/index.html?isin=${fondo.isin}`;
 
-    for (let i = 0; i < proxies.length; i++) {
+    // Llamamos a la API JSON directa de Yahoo Finance
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${fondo.ticker}?region=ES&lang=es-ES`;
+
+    for (let proxy of proxies) {
         try {
-            const res = await fetch(proxies[i](url));
+            const res = await fetch(proxy(url));
             if (!res.ok) continue;
-            const html = await res.text();
-
-            // Usamos una expresión regular para buscar el valor liquidativo.
-            // Busca la palabra "Liquidativo", ignora el HTML de por medio, y captura el número y la fecha.
-            // Ejemplo de lo que captura: "123,45" o "1.234,56"
-            const regexPrecio = /Liquidativo[^>]*>.*?([\d.,]+)\s*EUR/i;
-            const match = html.match(regexPrecio);
-
-            if (match && match[1]) {
-                // Limpiamos el formato español (1.234,56 -> 1234.56)
-                let precioTexto = match[1].replace(/\./g, '').replace(',', '.');
-                const precio = parseFloat(precioTexto);
-
-                if (!isNaN(precio) && precio > 0) {
-                    fondo.precio = precio;
-                    fondo.fechaPrecio = new Date().toISOString().split('T')[0];
-                    return true;
-                }
+            
+            const data = await res.json();
+            
+            // Navegamos por el JSON hasta el precio
+            const price = data.chart.result[0].meta.regularMarketPrice;
+            
+            if (price) {
+                fondo.precio = price;
+                fondo.fechaPrecio = new Date().toISOString().split('T')[0];
+                return true;
             }
-        } catch(e) { 
-            // Falla silenciosamente y prueba el siguiente proxy
-            continue; 
-        }
+        } catch(e) { continue; }
     }
-    return false; // Si llegamos aquí, fallaron todos los proxies
+    return false;
 }
 
     async function cargarPrecios() {
