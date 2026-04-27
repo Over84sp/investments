@@ -143,7 +143,7 @@
         .btn-del:hover { background: rgba(248,113,113,0.07); }
         .btn-row { display: flex; gap: 9px; margin-top: 14px; flex-wrap: wrap; }
 
-        .dca-input-wrap { position: relative; max-width: 260px; }
+        .dca-input-wrap { position: relative; max-width: 260px; margin-bottom: 20px; }
         .dca-input-wrap input {
             width: 100%; background: var(--surface2); border: 1px solid var(--border);
             border-radius: 9px; padding: 13px 38px 13px 15px; color: var(--text);
@@ -155,146 +155,73 @@
             transform: translateY(-50%); color: var(--muted); pointer-events: none;
         }
 
-        /* Estilos para sliders DCA interactivos */
+        /* Estilos para los sliders DCA */
         .dca-slider-container {
-            margin: 20px 0;
-            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .dca-slider-item {
+            margin-bottom: 20px;
+            padding: 16px;
             background: var(--surface2);
             border-radius: 10px;
             border: 1px solid var(--border);
         }
-        
-        .dca-slider-row {
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .dca-slider-row:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        
         .dca-slider-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
         }
-        
         .dca-slider-name {
+            font-size: 0.88em;
             font-weight: 500;
-            font-size: 0.9em;
-            color: var(--text);
         }
-        
         .dca-slider-value {
             font-family: var(--mono);
-            font-size: 1em;
-            font-weight: 600;
+            font-size: 0.95em;
             color: var(--accent);
+            font-weight: 500;
         }
-        
-        .dca-slider-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75em;
-            color: var(--muted);
-            margin-top: 6px;
-        }
-        
-        .dca-slider-wrapper {
+        .dca-slider-track {
             position: relative;
             height: 8px;
             background: var(--border);
             border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        .dca-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 8px;
-            background: transparent;
-            outline: none;
-            position: relative;
-            z-index: 2;
+            margin-bottom: 8px;
             cursor: pointer;
         }
-        
-        .dca-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--accent);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 3px solid var(--surface);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: all 0.2s;
-        }
-        
-        .dca-slider::-webkit-slider-thumb:hover {
-            background: var(--accent2);
-            transform: scale(1.15);
-        }
-        
-        .dca-slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: var(--accent);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 3px solid var(--surface);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: all 0.2s;
-        }
-        
-        .dca-slider::-moz-range-thumb:hover {
-            background: var(--accent2);
-            transform: scale(1.15);
-        }
-        
         .dca-slider-fill {
             position: absolute;
             height: 100%;
             border-radius: 4px;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            transition: width 0.15s ease;
+            transition: width 0.1s ease;
         }
-        
-        .fill-f1 { background: #4ade80; }
-        .fill-f2 { background: #60a5fa; }
-        .fill-f3 { background: #a78bfa; }
-        
-        .dca-total-bar {
+        .dca-slider-thumb {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .dca-slider-thumb:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+        }
+        .dca-slider-info {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            background: var(--surface);
-            border-radius: 8px;
-            margin-top: 20px;
-            border: 2px solid var(--border);
-        }
-        
-        .dca-total-label {
-            font-size: 0.8em;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            font-size: 0.72em;
             color: var(--muted);
         }
-        
-        .dca-total-value {
+        .dca-slider-percentage {
             font-family: var(--mono);
-            font-size: 1.3em;
-            font-weight: 600;
-            color: var(--accent);
         }
 
         .alert {
@@ -598,16 +525,17 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Calculadora DCA Interactiva</div>
-        <p style="font-size:0.84em;color:var(--muted);margin-bottom:16px;">Ajusta la distribución moviendo los sliders. La cantidad total siempre se mantiene y se respetan los porcentajes objetivo.</p>
+        <div class="section-title">Calculadora DCA Inteligente</div>
+        <p style="font-size:0.84em;color:var(--muted);margin-bottom:16px;">Ajusta interactivamente cuánto invertir en cada fondo. Los sliders se equilibran automáticamente según tus objetivos.</p>
         
-        <div class="dca-slider-container" id="dcaSliderContainer">
-            <!-- Los sliders se generarán dinámicamente -->
+        <div class="dca-input-wrap">
+            <input type="number" id="dcaAmount" placeholder="500" step="50" oninput="inicializarSlidersDCA()">
         </div>
-
+        
+        <div id="dcaSlidersContainer" class="dca-slider-container"></div>
+        
         <div class="btn-row">
-            <button class="btn" onclick="aplicarDCASliders()">✓ Aplicar DCA</button>
-            <button class="btn btn-ghost" onclick="resetearSliders()">↺ Resetear</button>
+            <button class="btn btn-ghost" onclick="aplicarDCA()">✓ Aplicar DCA</button>
         </div>
         <div id="dcaResult"></div>
     </div>
@@ -727,7 +655,7 @@
 </div>
 
 <footer>
-    Gestor DCA v1.3 — Modificado con sliders DCA interactivos
+    Gestor DCA v1.3 — Sistema de sliders interactivos implementado
 </footer>
 
 <script type="module">
@@ -884,9 +812,9 @@
 
     // ─── Fondos ────────────────────────────────────────────────────────────────
     const fondos = [
-        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null, precioManual: null },
-        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null, precioManual: null },
-        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null, precioManual: null },
+        { id: 'fund1', nombre: 'iShares Developed World',   objetivo: 75, isin: 'IE000ZYRH0Q7', precio: null, fechaPrecio: null, precioManual: null, color: '#4ade80' },
+        { id: 'fund2', nombre: 'iShares Emerging Markets',  objetivo: 13, isin: 'IE00BYWYCC39',  precio: null, fechaPrecio: null, precioManual: null, color: '#60a5fa' },
+        { id: 'fund3', nombre: 'Vanguard Global Small-Cap', objetivo: 12, isin: 'IE00B42W4L06',  precio: null, fechaPrecio: null, precioManual: null, color: '#a78bfa' },
     ];
 
     // Helper para decidir qué precio usar (el automático gana al manual)
@@ -1027,7 +955,7 @@
         if (e && e.target) e.target.classList.add('active');
         document.getElementById('tab-' + name).classList.add('active');
         if (name === 'dashboard') renderDashboard();
-        if (name === 'cartera')   { calcular(); inicializarSlidersDCA(); }
+        if (name === 'cartera')   { calcular(); prerellenarDCA(); }
         if (name === 'depositos') renderDepositos();
         if (name === 'varios')    renderVarios();
     };
@@ -1081,6 +1009,14 @@
         }
     }
 
+    function prerellenarDCA() {
+        const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
+        if (totalAparcado > 0) {
+            document.getElementById('dcaAmount').value = totalAparcado;
+            inicializarSlidersDCA();
+        }
+    }
+
     window.guardarObjetivo = (idx, val) => {
         const v = parseFloat(val);
         if (isNaN(v) || v < 0) return;
@@ -1110,133 +1046,230 @@
         if (lbl) lbl.textContent = fondos.map(f => f.objetivo.toFixed(1)+'%').join(' / ');
     }
 
-    // ─── NUEVA LÓGICA: Sliders DCA Interactivos ───────────────────────────────
-    let dcaSliderAmounts = [0, 0, 0]; // Cantidades actuales de cada slider
-    let dcaTotalAmount = 0; // Total disponible para DCA
-    let sliderBeingDragged = -1; // Índice del slider que se está arrastrando
+    // ─── Sistema de Sliders DCA Inteligente ────────────────────────────────────
+    let dcaAportaciones = [0, 0, 0]; // Aportaciones actuales para cada fondo
+    let draggingSlider = null;
 
-    function inicializarSlidersDCA() {
-        // Pre-rellenar con dinero aparcado
-        const totalAparcado = varios.filter(v => v.categoria === 'aparcado').reduce((s, v) => s + v.importe, 0);
-        dcaTotalAmount = totalAparcado > 0 ? totalAparcado : 500; // Por defecto 500€
-        
-        // Distribuir según objetivos
-        const suma = fondos.reduce((s, f) => s + f.objetivo, 0);
-        if (suma > 0) {
-            dcaSliderAmounts = fondos.map(f => dcaTotalAmount * (f.objetivo / suma));
-        } else {
-            dcaSliderAmounts = [dcaTotalAmount / 3, dcaTotalAmount / 3, dcaTotalAmount / 3];
+    window.inicializarSlidersDCA = () => {
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        if (!dca || dca <= 0) {
+            document.getElementById('dcaSlidersContainer').innerHTML = '';
+            document.getElementById('dcaResult').innerHTML = '';
+            return;
         }
-        
-        renderSlidersDCA();
+
+        const sinPrecio = fondos.filter(f => getPrecio(f) === 0);
+        if (sinPrecio.length > 0) {
+            document.getElementById('dcaSlidersContainer').innerHTML = `<div class="alert alert-warn">⏳ Faltan precios para: ${sinPrecio.map(f=>f.nombre).join(', ')}. Recarga o usa los inputs manuales.</div>`;
+            return;
+        }
+
+        // Calcular distribución óptima inicial basada en cartera actual y objetivos
+        dcaAportaciones = calcularDistribucionOptima(dca);
+        renderSliders();
+        actualizarResumenDCA();
+    };
+
+    function calcularDistribucionOptima(dca) {
+        const actualesEur  = fondos.map(f => valorFondo(f));
+        const totalActualEur = actualesEur.reduce((s, v) => s + v, 0);
+        const totalFutEur  = totalActualEur + dca;
+        const objetivos    = fondos.map(f => f.objetivo / 100);
+        const targets      = objetivos.map(o => totalFutEur * o);
+        let necesidades    = targets.map((t, i) => Math.max(0, t - actualesEur[i]));
+        const sumaNecesidades = necesidades.reduce((s, v) => s + v, 0);
+
+        let aportacionesEur;
+        if (sumaNecesidades <= 0) {
+            aportacionesEur = objetivos.map(o => dca * o);
+        } else if (sumaNecesidades <= dca) {
+            const exceso = dca - sumaNecesidades;
+            aportacionesEur = necesidades.map((n, i) => n + exceso * objetivos[i]);
+        } else {
+            const factor = dca / sumaNecesidades;
+            aportacionesEur = necesidades.map(n => n * factor);
+        }
+
+        return aportacionesEur;
     }
 
-    function renderSlidersDCA() {
-        const container = document.getElementById('dcaSliderContainer');
-        const colors = ['#4ade80', '#60a5fa', '#a78bfa'];
-        const nombres = ['Developed World', 'Emerging Markets', 'Small-Cap'];
+    function renderSliders() {
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        const container = document.getElementById('dcaSlidersContainer');
         
-        let html = '';
-        
-        fondos.forEach((f, i) => {
-            const precio = getPrecio(f);
-            const participaciones = precio > 0 ? (dcaSliderAmounts[i] / precio) : 0;
-            const porcentaje = dcaTotalAmount > 0 ? (dcaSliderAmounts[i] / dcaTotalAmount * 100) : 0;
-            const objetivo = f.objetivo;
-            const desviacion = porcentaje - objetivo;
-            
-            html += `
-                <div class="dca-slider-row">
+        container.innerHTML = fondos.map((f, i) => {
+            const porcentaje = dca > 0 ? (dcaAportaciones[i] / dca * 100) : 0;
+            return `
+                <div class="dca-slider-item">
                     <div class="dca-slider-header">
-                        <div class="dca-slider-name">${nombres[i]}</div>
-                        <div class="dca-slider-value">${fmtN(dcaSliderAmounts[i])}</div>
+                        <div class="dca-slider-name">${f.nombre}</div>
+                        <div class="dca-slider-value">${fmtN(dcaAportaciones[i])}</div>
                     </div>
-                    <div class="dca-slider-wrapper">
-                        <div class="dca-slider-fill fill-f${i+1}" id="sliderFill${i}" style="width:${(dcaSliderAmounts[i] / dcaTotalAmount * 100)}%"></div>
-                        <input type="range" 
-                            class="dca-slider" 
-                            id="slider${i}" 
-                            min="0" 
-                            max="${dcaTotalAmount}" 
-                            step="10" 
-                            value="${dcaSliderAmounts[i]}"
-                            oninput="actualizarSlider(${i}, parseFloat(this.value))"
-                            onmousedown="sliderBeingDragged = ${i}"
-                            ontouchstart="sliderBeingDragged = ${i}"
-                            onmouseup="sliderBeingDragged = -1"
-                            ontouchend="sliderBeingDragged = -1">
+                    <div class="dca-slider-track" id="track-${i}" data-index="${i}">
+                        <div class="dca-slider-fill" style="width: ${porcentaje}%; background: ${f.color}"></div>
+                        <div class="dca-slider-thumb" id="thumb-${i}" style="left: ${porcentaje}%; border-color: ${f.color}"></div>
                     </div>
                     <div class="dca-slider-info">
-                        <span>+${participaciones.toFixed(4)} participaciones</span>
-                        <span style="color:${Math.abs(desviacion) < 1 ? 'var(--accent)' : Math.abs(desviacion) < 3 ? 'var(--warning)' : 'var(--danger)'}">
-                            ${porcentaje.toFixed(1)}% (obj: ${objetivo}%)
-                            ${desviacion >= 0 ? '+' : ''}${desviacion.toFixed(1)}pp
-                        </span>
+                        <span>Objetivo: ${f.objetivo}%</span>
+                        <span class="dca-slider-percentage">${porcentaje.toFixed(1)}% del DCA</span>
                     </div>
                 </div>
             `;
+        }).join('');
+
+        // Añadir event listeners
+        fondos.forEach((f, i) => {
+            const track = document.getElementById(`track-${i}`);
+            const thumb = document.getElementById(`thumb-${i}`);
+
+            const handleMouseDown = (e) => {
+                e.preventDefault();
+                draggingSlider = i;
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            };
+
+            const handleTouchStart = (e) => {
+                e.preventDefault();
+                draggingSlider = i;
+                document.addEventListener('touchmove', handleTouchMove);
+                document.addEventListener('touchend', handleTouchEnd);
+            };
+
+            thumb.addEventListener('mousedown', handleMouseDown);
+            thumb.addEventListener('touchstart', handleTouchStart);
+            
+            track.addEventListener('click', (e) => {
+                if (e.target === thumb) return;
+                const rect = track.getBoundingClientRect();
+                const percentage = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100));
+                actualizarSlider(i, percentage);
+            });
+        });
+    };
+
+    function handleMouseMove(e) {
+        if (draggingSlider === null) return;
+        const track = document.getElementById(`track-${draggingSlider}`);
+        const rect = track.getBoundingClientRect();
+        const percentage = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100));
+        actualizarSlider(draggingSlider, percentage);
+    }
+
+    function handleTouchMove(e) {
+        if (draggingSlider === null) return;
+        const track = document.getElementById(`track-${draggingSlider}`);
+        const rect = track.getBoundingClientRect();
+        const touch = e.touches[0];
+        const percentage = Math.max(0, Math.min(100, (touch.clientX - rect.left) / rect.width * 100));
+        actualizarSlider(draggingSlider, percentage);
+    }
+
+    function handleMouseUp() {
+        draggingSlider = null;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
+
+    function handleTouchEnd() {
+        draggingSlider = null;
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+    }
+
+    function actualizarSlider(index, percentage) {
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        if (!dca || dca <= 0) return;
+
+        const nuevoValor = dca * (percentage / 100);
+        const diferencia = nuevoValor - dcaAportaciones[index];
+        
+        // Actualizar el slider que se movió
+        dcaAportaciones[index] = nuevoValor;
+
+        // Redistribuir la diferencia en los otros fondos según sus objetivos
+        const otrosIndices = fondos.map((_, i) => i).filter(i => i !== index);
+        const sumaObjetivosOtros = otrosIndices.reduce((s, i) => s + fondos[i].objetivo, 0);
+        
+        if (sumaObjetivosOtros > 0) {
+            otrosIndices.forEach(i => {
+                const proporcion = fondos[i].objetivo / sumaObjetivosOtros;
+                dcaAportaciones[i] = Math.max(0, dcaAportaciones[i] - diferencia * proporcion);
+            });
+        }
+
+        // Normalizar para que la suma sea exactamente el DCA
+        const suma = dcaAportaciones.reduce((s, v) => s + v, 0);
+        if (suma > 0) {
+            const factor = dca / suma;
+            dcaAportaciones = dcaAportaciones.map(v => v * factor);
+        }
+
+        renderSliders();
+        actualizarResumenDCA();
+    }
+
+    function actualizarResumenDCA() {
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        if (!dca || dca <= 0) return;
+
+        const actualesEur = fondos.map(f => valorFondo(f));
+        const totalActualEur = actualesEur.reduce((s, v) => s + v, 0);
+        const totalFutEur = totalActualEur + dca;
+
+        let html = '<div class="dca-result">';
+        fondos.forEach((f, i) => {
+            const pFondo = getPrecio(f);
+            const eurAportar = dcaAportaciones[i];
+            const partNuevas = eurAportar / pFondo;
+            const partActuales = parseFloat(lsGet(f.id)) || 0;
+            const partNuevoTotal = partActuales + partNuevas;
+            const eurNuevoTotal = partNuevoTotal * pFondo;
+            const pFut = totalFutEur > 0 ? (eurNuevoTotal/totalFutEur*100).toFixed(1) : 0;
+            const desv = (parseFloat(pFut) - f.objetivo).toFixed(1);
+            const desvColor = Math.abs(parseFloat(desv)) < 0.5 ? 'var(--accent)' : Math.abs(parseFloat(desv)) < 2 ? 'var(--warning)' : 'var(--danger)';
+            
+            html += `
+                <div class="dca-fund-row">
+                    <div>
+                        <div style="font-weight:500;font-size:0.9em">${f.nombre}</div>
+                        <div class="dca-nuevo">
+                            +${partNuevas.toFixed(4)} part. · <span style="color:var(--accent2)">@${pFondo.toFixed(4)}€</span><br>
+                            → Total: ${partNuevoTotal.toFixed(4)} part. = ${fmtN(eurNuevoTotal)}
+                            <span style="color:var(--accent2)">(${pFut}%)</span>
+                            <span style="color:${desvColor};font-size:0.85em"> ${parseFloat(desv)>=0?'+':''}${desv}pp vs obj. ${f.objetivo}%</span>
+                        </div>
+                    </div>
+                    <div class="dca-amount">+${fmtN(eurAportar)}</div>
+                </div>`;
         });
         
         html += `
-            <div class="dca-total-bar">
-                <div class="dca-total-label">Total DCA</div>
-                <div class="dca-total-value">${fmtN(dcaTotalAmount)}</div>
-            </div>
-        `;
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid var(--border);">
+                <div style="font-size:0.82em;color:var(--muted);">
+                    Total actual <span style="font-family:var(--mono);color:var(--text);">${fmtN(totalActualEur)}</span>
+                    &nbsp;+&nbsp;aportación <span style="font-family:var(--mono);color:var(--accent);">${fmtN(dca)}</span>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;">Total tras DCA</div>
+                    <div style="font-family:var(--mono);font-size:1.4em;font-weight:500;color:var(--accent);">${fmtN(totalFutEur)}</div>
+                </div>
+            </div>`;
+        html += '</div>';
         
-        container.innerHTML = html;
+        document.getElementById('dcaResult').innerHTML = html;
     }
 
-    window.actualizarSlider = (index, newValue) => {
-        // Calcular cuánto ha cambiado
-        const oldValue = dcaSliderAmounts[index];
-        const delta = newValue - oldValue;
-        
-        // Actualizar el valor del slider que se está moviendo
-        dcaSliderAmounts[index] = newValue;
-        
-        // Redistribuir el delta entre los otros dos fondos según sus objetivos
-        const otherIndices = [0, 1, 2].filter(i => i !== index);
-        const totalObjetivo = otherIndices.reduce((sum, i) => sum + fondos[i].objetivo, 0);
-        
-        if (totalObjetivo > 0) {
-            otherIndices.forEach(i => {
-                const proportion = fondos[i].objetivo / totalObjetivo;
-                dcaSliderAmounts[i] = Math.max(0, dcaSliderAmounts[i] - delta * proportion);
-            });
-        } else {
-            // Si no hay objetivos, distribuir equitativamente
-            otherIndices.forEach(i => {
-                dcaSliderAmounts[i] = Math.max(0, dcaSliderAmounts[i] - delta / 2);
-            });
-        }
-        
-        // Normalizar para que siempre sume el total exacto
-        const currentSum = dcaSliderAmounts.reduce((s, v) => s + v, 0);
-        if (currentSum > 0 && Math.abs(currentSum - dcaTotalAmount) > 0.01) {
-            const factor = dcaTotalAmount / currentSum;
-            dcaSliderAmounts = dcaSliderAmounts.map(v => v * factor);
-        }
-        
-        renderSlidersDCA();
-    };
-
-    window.resetearSliders = () => {
-        inicializarSlidersDCA();
-    };
-
-    window.aplicarDCASliders = () => {
+    window.aplicarDCA = () => {
+        const dca = parseFloat(document.getElementById('dcaAmount').value);
+        if (!dca || dca <= 0) { alert('Introduce un importe válido'); return; }
         const sinPrecio = fondos.filter(f => getPrecio(f) === 0);
-        if (sinPrecio.length > 0) {
-            alert('Faltan precios para: ' + sinPrecio.map(f => f.nombre).join(', '));
-            return;
-        }
-        
-        if (!confirm(`¿Aplicar DCA de ${fmtN(dcaTotalAmount)} y actualizar las participaciones?`)) return;
+        if (sinPrecio.length > 0) { alert('Faltan precios para: ' + sinPrecio.map(f=>f.nombre).join(', ')); return; }
+        if (!confirm('¿Aplicar este DCA y actualizar las participaciones?')) return;
 
         fondos.forEach((f, i) => {
             const pFondo = getPrecio(f);
-            const partNuevas = dcaSliderAmounts[i] / pFondo;
+            const partNuevas = dcaAportaciones[i] / pFondo;
             const partActuales = parseFloat(document.getElementById(f.id).value) || 0;
             const partNuevoTotal = partActuales + partNuevas;
             document.getElementById(f.id).value = partNuevoTotal.toFixed(6);
@@ -1244,24 +1277,11 @@
         });
         
         guardarFirestore();
-        registrarDCA(dcaTotalAmount);
+        registrarDCA(dca);
         calcular();
-        
-        // Mostrar resultado
-        const resultHTML = `
-            <div class="alert alert-ok" style="margin-top:14px">
-                ✓ DCA de ${fmtN(dcaTotalAmount)} aplicado correctamente<br>
-                <span style="font-size:0.9em;margin-top:6px;display:block;">
-                    ${fondos.map((f, i) => `${f.nombre.split(' ')[1]}: +${fmtN(dcaSliderAmounts[i])}`).join(' · ')}
-                </span>
-            </div>
-        `;
-        document.getElementById('dcaResult').innerHTML = resultHTML;
-        
-        // Reiniciar sliders
-        setTimeout(() => {
-            inicializarSlidersDCA();
-        }, 500);
+        document.getElementById('dcaAmount').value = '';
+        document.getElementById('dcaSlidersContainer').innerHTML = '';
+        document.getElementById('dcaResult').innerHTML = '<div class="alert alert-ok" style="margin-top:14px">✓ DCA aplicado. Participaciones actualizadas.</div>';
     };
 
     // ─── Depósitos ─────────────────────────────────────────────────────────────
@@ -1780,7 +1800,6 @@
         renderVarios();
         renderDashboard();
         cargarPrecios();
-        inicializarSlidersDCA();
     }
 </script>
 </body>
